@@ -2,8 +2,11 @@
 
 Release publishing/deployment is documented separately in
 [DEPLOYMENT.md](DEPLOYMENT.md). Its versioned YAML is prepared, with execution
-disabled pending the no-cost hosting decision. It has not been installed or
-validated against live Google Cloud resources. The PR pipeline below remains
+disabled pending reviewed main and live release verification. The project-scoped
+keyless GCP connector passes its connection test; service `devtrack`, environment
+`production` and infrastructure `cloud_run` exist. The release pipeline has not
+been executed yet; its reviewed YAML is installed with releases disabled by
+default. The PR pipeline below remains
 non-deploying and does not receive production secrets.
 
 The pipeline is named `devtrack-pr-validation` (identifier

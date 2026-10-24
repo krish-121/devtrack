@@ -95,22 +95,23 @@ Helmet's existing security headers remain enabled.
 Never seed production or run `migrate dev` at container startup. Apply reviewed
 migrations with `prisma migrate deploy` as a separate authorized operation before
 running a new application version. The slim runtime deliberately omits Prisma
-CLI, migration sources and build tooling. Harness uses the separate
-`npm run db:migrate:production` entry point after installing tooling in its
-transient runner. It requires an explicit production environment and full SHA,
+CLI, migration sources and build tooling. Harness publishes a separate
+`migrations` target and runs it as a one-time Cloud Run Job before deployment.
+Its `npm run db:migrate:production` entry point requires production mode and a full SHA,
 and never loads development `.env` values in production mode.
 
-The existing build stage can be used as a separate tools image if needed:
+Build that separate tools image locally with explicit public version metadata:
 
 ```sh
-docker build --target build --tag devtrack:migrations .
-docker run --rm --env-file .env.production.local devtrack:migrations node node_modules/prisma/build/index.js migrate deploy
+docker build --target migrations --build-arg APP_VERSION=<FULL_COMMIT_SHA> --tag devtrack-migrations:local .
+docker run --rm --env-file .env.production.local devtrack-migrations:local
 ```
 
 This is a documented operation, not an application startup/seed step. This phase
 executed migrations only against disposable test databases. Release YAML and a
 Cloud Run manifest are prepared; registry publishing and cloud deployment await
-hosting approval and live verification. The release trigger is disabled.
+reviewed main and live verification. The small trial database is ready, and the
+release trigger is disabled.
 
 The build follows the official [Docker Node.js guide](https://docs.docker.com/guides/nodejs/)
 and [npm ci semantics](https://docs.npmjs.com/cli/v11/commands/npm-ci/).

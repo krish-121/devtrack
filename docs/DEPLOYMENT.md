@@ -1,10 +1,57 @@
 # Artifact and Cloud Run deployment
 
 This is the Phase 13/14 setup guide, not a record of a successful cloud release.
-The user requires no charges. Google Cloud billing/trial activation, cloud IAM,
-registry creation, production PostgreSQL and deployment have not been approved
-or performed. The release trigger is disabled and `release_enabled` defaults to
-false. Keep both protections until the hosting decision and setup are complete.
+The user requires no charges and explicitly approved deployment using Google's
+protected Free Trial without a paid upgrade. The trial, dedicated project,
+immutable registry and approved scoped identities are set up. Harness's keyless
+GCP connector passes its connection test, and its service/environment/target
+definitions exist. The initial separate free Cloud SQL instance failed to
+provision. The user then explicitly approved a small database using promotional
+credit. It is running, with a verified limited app user and managed secret. The
+release pipeline is saved but has not run; its trigger is disabled and
+`release_enabled` defaults to false until reviewed main and live checks are ready.
+
+## Verified setup on 24 October 2026
+
+- Project: `devtrack-trial-krish-20261024`, number `656038155261`.
+- Trial: console shows promotional credit and expiry on 23 January 2027;
+  the account remains an unupgraded Free Trial.
+- Registry: `us-central1/devtrack`, Docker format, immutable tags, no image yet.
+- Identity: [approved roles and trust boundary](DEPLOYMENT_IDENTITY_PLAN.md).
+  No user-managed service-account private keys were created.
+- Harness: project-scoped `gcp` connector connection test succeeds. Service
+  `devtrack` fetches the versioned manifest by the release commit expression.
+  Environment `production` and infrastructure `cloud_run` exist; the target uses
+  `${{ inputs.gcp_project }}`, region `us-central1`, connector `gcp`, service scope
+  `devtrack` and simultaneous deployments `false`. Runtime execution is unverified.
+- Pipeline `devtrack_release` is saved with Validate, Package and Deploy Production.
+  Its primary GAR artifact `devtrack_image` selects package `devtrack` and the
+  full commit from `stages.Validate.output.COMMIT_SHA`. The saved pipeline YAML
+  was copied back from the editor and matched the prepared definition.
+- The infrastructure UI's fixed project dropdown required an unavailable
+  delegate. Its supported Expression mode saved the pipeline's explicit project
+  input instead. This does not grant additional permissions or install a delegate.
+- Cloud SQL `devtrack-postgres`: `FAILED` with `ERROR_STOCKOUT`; Google's selected
+  Iowa zone lacked capacity for the fixed 8-CPU separate 30-day offer. It remains
+  untouched; do not upgrade it or confuse it with the new small instance.
+- Cloud SQL `devtrack-postgres-small`: `RUNNABLE`, PostgreSQL 18, Enterprise
+  `db-f1-micro`, 10 GB SSD, `us-central1-b`, no automatic storage growth. Connector
+  enforcement is required, SSL mode is `ENCRYPTED_ONLY`, and no IP allowlist is
+  configured. One daily backup is retained; point-in-time recovery is disabled.
+  Backup usage is additional to the compute/storage estimate below.
+- Database `devtrack` is owned by login `devtrack_app`, which has no superuser,
+  database-creation, role-creation or replication permission. Bootstrap login was
+  verified; the database had zero application tables before release migration.
+- Secret `production_database_url`, version `1`, is enabled in Google Secret
+  Manager with only the approved runtime identity granted secret access. Neither
+  its value nor the database password is stored in Git or a Harness Run step.
+- No GAR image push, production migration, Cloud Run service/job or public demo
+  exists yet. Local Unix-socket migration/app verification passes.
+
+The user wants the demo available for internship interviews. Do not shut it down
+after the first demonstration without their agreement. Trial expiry is still a
+hard limit under the no-paid-upgrade requirement. Preserve deployment evidence
+and export database data before expiry; a recording can support later interviews.
 
 ## What Google Cloud supplies
 
@@ -25,8 +72,13 @@ by themselves. See [Google's Free Trial terms and lifecycle](https://docs.cloud.
 
 Free Tier allowances on a paid billing account are not a spending cap. Cloud Run
 scale-to-zero/max-one settings reduce usage but cannot guarantee a zero bill.
-Cloud SQL is not configured as a permanently free database. No paid upgrade,
-Cloud SQL instance or third-party database account is authorized by this guide.
+Cloud SQL is not a permanently free database. No paid upgrade is authorized.
+The small standard Cloud SQL instance was explicitly approved and created using
+promotional credit. At the reviewed Iowa rate, `db-f1-micro`
+compute is $0.0105/hour (about $1.76/week or $7.67/730-hour month), and 10 GB SSD
+storage is approximately $1.70/month. These exclude networking, backups and other
+services, and are estimates of credit consumption, not a guaranteed total or a
+spending cap. See [Cloud SQL pricing](https://cloud.google.com/sql/pricing?hl=en).
 The card-free [Starter Tier](https://docs.cloud.google.com/docs/starter-tier)
 manages IAM/API access through AI Studio and does not provide the independent
 Harness deployment access required here.
@@ -53,12 +105,13 @@ still only builds locally. Harness performs publishing during a release.
 
 Git is authoritative for `infrastructure/harness/pipelines/devtrack-release.yaml`,
 `infrastructure/harness/triggers/devtrack-release.yaml` and
-`infrastructure/cloud-run/devtrack.yaml`. The release pipeline is not installed
-or executed in Harness yet. It uses the account's v1 pipeline dialect, while the
+`infrastructure/cloud-run/devtrack.yaml` and `migrate.yaml`. The release pipeline
+is installed but has not executed yet. It uses the account's v1 pipeline dialect, while the
 webhook uses the supported trigger wrapper. Official JSON-schema checks verify
 structure; they do not prove native template expansion, IAM or deployment.
 
-Configure these project-scoped resources only after hosting is approved:
+Use these project-scoped resource mappings; the verified setup above records
+which ones already exist:
 
 | Resource         | Required configuration                                                                                                            |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -70,14 +123,13 @@ Configure these project-scoped resources only after hosting is approved:
 | Artifact source  | GAR/Docker, approved project/region/repository, package `devtrack`; explicit version equal to `stages.Validate.output.COMMIT_SHA` |
 | Environment      | `production`                                                                                                                      |
 | Infrastructure   | `cloud_run`, approved GCP project/region and `gcp` connector; concurrent deployments disabled/queued                              |
-| Harness secret   | `production_database_url`, production-only credential; never a test database URL                                                  |
 | Google secret    | `production_database_url`, numeric secret version matching `database_secret_version`                                              |
 | Runtime identity | Dedicated Cloud Run service account; access only to the required database secret                                                  |
 
-The Harness migration secret and Google runtime secret must resolve to the same
-pinned credential version. A supported secret-manager reference is preferable
-to independently maintaining values; verify that capability in the account
-before setup. No secret values belong in YAML or execution logs.
+The app and migration job reference the same pinned Google secret version.
+Harness orchestrates the job and its secret reference; its CI Run steps do not
+receive the database credential. This avoids duplicating the secret into a second
+store. No secret values belong in YAML or execution logs.
 
 Use a dedicated Docker-format GAR repository with immutable tags. Resolve and
 record its manifest digest after publishing. The service must select the exact
@@ -86,11 +138,15 @@ never `latest` or a moving branch. Harness injects the resolved image into the
 Cloud Run manifest. Verify these service bindings in the real account before
 enabling the trigger; the pipeline alone cannot create them.
 
-The native `buildAndPushToGAR@1.0.0` template uses BuildX/caching for OIDC and
-passes `APP_VERSION` as a build argument. Its build arguments and artifact/output
-bindings still need account-side template resolution and a real execution.
-Do not enable deployment if the template ignores those fields. The local Docker
-suite already verifies the underlying Dockerfile and metadata behavior.
+The account's native stable `buildAndPushToGAR` template uses BuildX/caching for
+OIDC. The documented `@1.0.0` version did not exist in this account. Inspecting
+the native editor established the actual inputs: `host`, `project_id`,
+`image_name`, `build_args` with `path1`/`path2` entries, `context`, `target`, `tags`
+and `caching`. The repository uses that saved form. The pipeline publishes the
+`runtime` target as `devtrack:<SHA>` and the separate `migrations` target as
+`devtrack-migrations:<SHA>`. Both bake the same `APP_VERSION`. A real execution
+must still prove publishing, metadata and artifact resolution; schema validity
+alone does not prove it. The local Docker suite verifies both targets.
 
 Use the approved project's number and region to configure the default origin
 `https://devtrack-PROJECT_NUMBER.REGION.run.app`; verify it against Cloud Run's
@@ -113,25 +169,41 @@ on the dedicated runtime identity. Give the appropriate Cloud Run service agent
 repository read access where needed. Give the runtime identity Secret Accessor
 only on the database secret. Add monitoring/logging read permissions only if the
 selected Harness verification requires them. Record the exact granted roles and
-resource scopes after approval; none have been granted in this phase.
+resource scopes after approval. The approved grants already applied, including
+the secret-specific accessor, are recorded in
+[DEPLOYMENT_IDENTITY_PLAN.md](DEPLOYMENT_IDENTITY_PLAN.md).
 
-The selected managed PostgreSQL endpoint must accept TLS connections from both
-Harness Cloud migration runners and Cloud Run. The current migration step does
-not provide a private Cloud SQL socket, VPC tunnel or database proxy. A private
-endpoint needs a deliberate networking change first. Select the provider,
-region, connection limits, backup/export process and current price together;
-none is chosen or provisioned yet. Keep production separate from local and CI.
+The app and one-time migration job use Cloud Run's authenticated Cloud SQL socket.
+Both manifests specify the connection name through
+`run.googleapis.com/cloudsql-instances`; only the runtime identity connects.
+The secret URL uses a `localhost` placeholder hostname and an encoded
+`host=/cloudsql/PROJECT:REGION:INSTANCE` query parameter. The connector handles
+encryption to Google. There is no public database IP allowlist or VPC connector.
+Local Docker checks exercise this URL form for both Prisma migrations and the
+app's PostgreSQL adapter. See [Google's Cloud Run connection guide](https://docs.cloud.google.com/sql/docs/postgres/connect-run).
+
+Bootstrap used the official, checksum-verified Cloud SQL Auth Proxy 2.26.3 bound
+only to localhost:5435 and the user's existing CLI login. The temporary proxy was
+stopped afterward; the cloud database remains running. App/root passwords are
+random, held in ignored local Windows-encrypted recovery files, and never echoed.
+The bootstrap corrected a typed SQL parameter and temporarily enabled the admin's
+ability to set the newly created role while assigning database ownership, then
+disabled that ability again. The application received no administrative role.
 
 ## Execution and failure behavior
 
 1. **Validate** refuses disabled releases and non-current-main checkouts, then
    installs pinned tools and runs format/schema/lint, types, tests, real isolated
    PostgreSQL integration/coverage and the production build.
-2. **Package** rechecks main, builds the runtime Docker target once with the full
-   commit SHA and publishes that tag to GAR.
-3. **Deploy Production** rechecks main, installs transient migration tooling,
-   runs `npm run db:migrate:production` once, deploys the selected published
-   artifact, then runs `npm run smoke:deployment -- HTTPS_ORIGIN FULL_SHA`.
+2. **Package** rechecks main, builds each Docker target once with the full commit
+   SHA and publishes the app and migration-tools images to GAR.
+3. **Deploy Production** rechecks main and installs smoke tooling. A Run step
+   renders only public job configuration to `.ci/migration-job.yaml`, quoting each
+   replacement as a JSON string so it cannot inject YAML. The native
+   `googleCloudRunJobStep` uses `manifest` and `execute_cmd_options: --wait` (the
+   actual account-supported keys), replaces the job and waits for completion.
+   Only then does the native deploy step deploy the primary app artifact, followed
+   by `npm run smoke:deployment -- HTTPS_ORIGIN FULL_SHA`.
 
 `verify-release-source.sh` rejects dirty checkouts and commits other than remote
 main. A newer merge makes an older in-flight release fail its next guard; it
@@ -141,7 +213,9 @@ migrations cannot race. Ordinary PR validation has no publishing/deployment step
 `migrate-production.ts` requires an explicitly supplied production environment,
 HTTPS origin, database URL and full SHA before invoking `prisma migrate deploy`.
 Prisma configuration skips local `.env` loading in production. The application
-runtime contains no Prisma CLI and never migrates or seeds on startup. A failed
+runtime contains no Prisma CLI and never migrates or seeds on startup. The
+separate migration image runs that entry point as user `node`; the job has one
+task, parallelism one, zero retries and a five-minute task timeout. A failed
 migration stops deployment. Review SQL for backward compatibility: restoring an
 older container does not reverse a schema change or recover deleted data.
 

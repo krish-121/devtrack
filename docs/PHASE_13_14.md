@@ -2,9 +2,21 @@
 
 Checked on 24 October 2026. Phases 1–12 remain implemented and verified.
 **Phases 13 and 14 are not complete end to end.** The repository implementation
-and local checks are ready for review; the user's zero-charge requirement leaves
-Google Cloud account setup, registry publishing and deployment unresolved.
-No free trial, billing account, paid service or production database was created.
+and local checks are ready for review. The user activated Google's protected Free
+Trial and approved scoped keyless deployment identities. The dedicated project,
+immutable GAR repository and passing Harness GCP connection are set up. Harness
+service `devtrack`, environment `production` and infrastructure `cloud_run` exist.
+The saved release pipeline and service artifact binding use the account's actual
+native template inputs. Registry publishing and deployment remain unresolved.
+The separate 30-day Cloud SQL offer failed with `ERROR_STOCKOUT`; the user then
+explicitly approved the small credit-funded database. `devtrack-postgres-small`
+is running with a limited app user and Google secret version `1`. No production
+application migration, Cloud Run deployment or paid billing upgrade exists.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the verified resource map and credit
+estimate, and [DEPLOYMENT_IDENTITY_PLAN.md](DEPLOYMENT_IDENTITY_PLAN.md) for the
+approved permissions. Keep the demo available for interviews during the trial;
+do not shut it down after its first demonstration without the user's agreement.
 
 ## What changed
 
@@ -19,6 +31,15 @@ No free trial, billing account, paid service or production database was created.
 - Added the Cloud Run service manifest and an explicit production migration
   entry point. The slim application image still does not contain migration
   tooling or run migrations at startup.
+- Added a separate non-root Docker `migrations` target and a one-time Cloud Run
+  Job manifest. Both the job and app use authenticated Cloud SQL sockets and the
+  same pinned managed secret. The job waits for completion, has zero retries,
+  and stops deployment on failure. No database credential enters CI Run steps.
+- Verified the actual native Harness UI configuration: the stable GAR template
+  uses `host`, `project_id`, `image_name` and `build_args` (`path1`/`path2` pairs),
+  while the job uses `manifest` and `execute_cmd_options`. The documented GAR
+  `@1.0.0` template did not exist in this account. The final saved pipeline was
+  copied back and matched the prepared YAML; a real release is still required.
 - Patched transitive `body-parser` 2.3.0 → 2.4.0 and `fast-uri` 3.1.8 → 3.1.9;
   the body-parser update also resolves `qs` to 6.16.1. Fresh installs report zero
   known npm vulnerabilities. See the
@@ -40,12 +61,12 @@ Created:
 - `infrastructure/harness/pipelines/devtrack-release.yaml`
 - `infrastructure/harness/triggers/devtrack-release.yaml`
 - `infrastructure/harness/scripts/verify-release-source.sh`
-- `infrastructure/cloud-run/devtrack.yaml`
-- `docs/DEPLOYMENT.md`, this report
+- `infrastructure/cloud-run/devtrack.yaml`, `migrate.yaml`
+- `docs/DEPLOYMENT.md`, `docs/DEPLOYMENT_IDENTITY_PLAN.md`, this report
 
 Modified:
 
-- `.env.example`, `Dockerfile`, `package.json`, `package-lock.json`
+- `.env.example`, `Dockerfile`, `docker-compose.yml`, `package.json`, `package-lock.json`
 - `apps/api/src/app.ts`, `app.integration.test.ts`
 - `apps/api/src/config/env.ts`, `env.test.ts`, `apps/api/test/environment.ts`
 - `packages/shared/src/api.ts`, `index.ts`
@@ -85,9 +106,14 @@ production security, runtime contents and clean shutdown checks.
 
 The production migration command passed against only the disposable test
 database on localhost:5433. Missing `DATABASE_URL` and a development version
-were rejected before migration. No production SQL was executed. The shell
+were rejected before migration. Production bootstrap created only the limited
+role and empty app database; no production application migration or seed has run. The shell
 release guard passes Git Bash syntax checking and both source/artifact guards
 reject the dirty working tree as intended.
+
+Harness PR validation execution [#5](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/ci/orgs/default/projects/DevTrack/pipelines/devtrack_pr_validation/executions/goqY6ZA9SsKhOSw_6BT6yQ/pipeline)
+passed for commit `6f384406981f4273859df449854294090775b830` (1 minute 59 seconds).
+That validates the PR code; it is not a release/deployment execution.
 
 The release pipeline and trigger pass the official Harness JSON schemas using
 temporary `ajv-cli` tooling (not an application dependency):
@@ -109,14 +135,40 @@ Npm's pending install-script notices and Playwright's color-variable warning are
 non-failing tool notices; Prisma generation, native Argon2 and browser checks
 all executed successfully.
 
+The approved small-database follow-up changed `Dockerfile`, `docker-compose.yml`,
+`scripts/test-e2e.ts`, both Cloud Run manifests and the release YAML. Documentation
+updates cover `README.md`, `DEPLOYMENT.md`, `DEPLOYMENT_IDENTITY_PLAN.md`,
+`HARNESS.md`, `DOCKER.md`, `TESTING.md`, `PROJECT_PROGRESS.md` and this report.
+Application features, schema and business logic did not change.
+
+The Docker verification now migrates its fresh test database from the tools
+container with networking disabled, using a shared Unix socket; it then repeats
+the migration to verify a safe no-op and tests the app using that socket. Both
+Chromium workflows and production security/version/shutdown checks passed.
+`npm run test:coverage` passed all 94 API and 28 frontend tests with unchanged
+coverage figures above. Formatting, lint, strict types, Prisma validation and
+`npm audit --audit-level=low` passed; Docker builds compiled all production
+workspaces. These checks did not connect to the production database.
+
+Cloud setup commands used the official Google CLI to create/describe the small
+instance, create the managed secret and apply the previously approved
+secret-specific runtime binding. The checksum-verified official Cloud SQL Auth
+Proxy 2.26.3 was used only for localhost bootstrap, then stopped. Root/application
+passwords were never printed or committed. Resolved bootstrap issues were an
+unsupported optional CLI label flag, PostgreSQL's required parameter type in
+`format()`, and the admin's required temporary `SET ROLE` ability to assign
+database ownership. None was worked around by granting the app administrative
+roles or opening database IP access.
+
 ## What remains
 
 Read [DEPLOYMENT.md](DEPLOYMENT.md) for the concrete resource/input map and trial
-lifecycle. Live completion needs an approved hosting arrangement, managed
-PostgreSQL, scoped GCP identity and secret access, real Harness service/environment/
-infrastructure configuration, GAR push, migration and Cloud Run execution.
+lifecycle. Live completion still needs owner review/merge of the concrete PRs,
+latest-commit Harness validation, GAR push, production migration and Cloud Run
+execution. The configured artifact binding and native templates still require
+real runtime verification. Existing cloud/Harness definitions do not prove runs.
 Record the commit, registry digest, Harness run, Cloud Run revision/time and
-external HTTPS smoke result. None of that cloud evidence exists yet.
+external HTTPS smoke result. No successful cloud release evidence exists yet.
 
 The bootstrap PR is still awaiting user review/merge. A release must use reviewed
 main, not publish unmerged application code just to make a pipeline turn green.
@@ -142,4 +194,5 @@ Suggested commit messages:
 feat: add traceable artifacts and deployment verification
 ci: prepare disabled GAR and Cloud Run release pipeline
 docs: record deployment setup and pending cloud verification
+ci: run secure Cloud SQL migrations before Cloud Run deployment
 ```

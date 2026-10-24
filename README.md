@@ -5,8 +5,9 @@ currently implements **Phases 1–12**: repository tooling, PostgreSQL/Prisma,
 cookie-based authentication, projects, tasks, a real dashboard, and application
 feedback/accessibility polish, testing hardening, a production Docker image,
 and a GitHub PR workflow with verified Harness CI.
-Phase 13/14 release code is prepared locally; registry publishing and live
-Cloud Run deployment remain pending the user's no-charge hosting decision.
+Phase 13/14 release code is prepared and protected-trial cloud setup is underway;
+the small PostgreSQL database and secret are ready. Registry publishing and live
+Cloud Run deployment remain pending. These phases are not complete end to end.
 The UI supports task status, priority, optional
 due dates, server-side search/filtering, and real project progress.
 

@@ -92,6 +92,15 @@ runs the deployment smoke, and proves a wrong expected SHA fails. The HTTP clien
 that API smoke check; this does not test TLS termination itself or turn off the
 production HTTPS requirement. TLS/deployment remain later infrastructure work.
 
+Docker mode also builds the separate `migrations` target and applies migrations
+to a fresh disposable database from that container. A second execution proves
+that an unchanged release has no pending migrations. The migration container has
+networking disabled and shares only the test PostgreSQL Unix-socket volume;
+the app uses that same socket URL for the browser/production checks. This tests
+the connection form used by Cloud Run without contacting the cloud database.
+Compose's `postgres-socket-e2e` volume belongs only to the `devtrack-e2e` project;
+application test data remains in PostgreSQL's disposable tmpfs.
+
 ## Coverage and artifacts
 
 Reports are generated in `apps/api/coverage/` and `apps/web/coverage/`, with
