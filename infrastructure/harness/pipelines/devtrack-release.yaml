@@ -57,12 +57,14 @@ pipeline:
             env:
               RELEASE_ENABLED: ${{ inputs.release_enabled }}
               GCP_PROJECT: ${{ inputs.gcp_project }}
+              EXPECTED_COMMIT: ${{ codebase.sha }}
             script: |-
               set -eu
               [ "$RELEASE_ENABLED" = true ] || { echo 'Cloud release is disabled pending account setup.' >&2; exit 1; }
               [ "$GCP_PROJECT" = devtrack-trial-krish-20261024 ] || { echo 'This release is restricted to the approved trial project.' >&2; exit 1; }
               COMMIT_SHA=$(sh infrastructure/harness/scripts/verify-release-source.sh)
-              printf 'COMMIT_SHA=%s\n' "$COMMIT_SHA" >> "$HARNESS_OUTPUT"
+              [ "$COMMIT_SHA" = "$EXPECTED_COMMIT" ] || { echo 'Harness commit metadata does not match the checked-out source.' >&2; exit 1; }
+              printf 'Verified release commit %s\n' "$COMMIT_SHA"
         - name: Install pinned tools and dependencies
           id: Install
           run:
@@ -139,13 +141,13 @@ pipeline:
               project_id: ${{ inputs.gcp_project }}
               image_name: ${{ inputs.artifact_repository }}/devtrack
               tags:
-                - ${{ stages.Validate.output.COMMIT_SHA }}
+                - ${{ codebase.sha }}
               caching: true
               context: .
               target: runtime
               build_args:
                 - path1: APP_VERSION
-                  path2: ${{ stages.Validate.output.COMMIT_SHA }}
+                  path2: ${{ codebase.sha }}
         - name: Publish commit migration tools to Google Artifact Registry
           id: Publish_migrations
           template:
@@ -156,13 +158,13 @@ pipeline:
               project_id: ${{ inputs.gcp_project }}
               image_name: ${{ inputs.artifact_repository }}/devtrack-migrations
               tags:
-                - ${{ stages.Validate.output.COMMIT_SHA }}
+                - ${{ codebase.sha }}
               caching: true
               context: .
               target: migrations
               build_args:
                 - path1: APP_VERSION
-                  path2: ${{ stages.Validate.output.COMMIT_SHA }}
+                  path2: ${{ codebase.sha }}
     - name: Deploy Production
       id: Deploy_Production
       needs: Package
@@ -199,7 +201,7 @@ pipeline:
           run:
             shell: sh
             env:
-              MIGRATION_IMAGE: ${{ inputs.region }}-docker.pkg.dev/${{ inputs.gcp_project }}/${{ inputs.artifact_repository }}/devtrack-migrations:${{ stages.Validate.output.COMMIT_SHA }}
+              MIGRATION_IMAGE: ${{ inputs.region }}-docker.pkg.dev/${{ inputs.gcp_project }}/${{ inputs.artifact_repository }}/devtrack-migrations:${{ codebase.sha }}
               APPLICATION_ORIGIN: ${{ inputs.application_origin }}
               RUNTIME_SERVICE_ACCOUNT: ${{ inputs.runtime_service_account }}
               CLOUD_SQL_CONNECTION: ${{ inputs.cloud_sql_connection }}
@@ -239,7 +241,7 @@ pipeline:
             shell: sh
             env:
               APPLICATION_ORIGIN: ${{ inputs.application_origin }}
-              EXPECTED_COMMIT: ${{ stages.Validate.output.COMMIT_SHA }}
+              EXPECTED_COMMIT: ${{ codebase.sha }}
             script: |-
               set -eu
               export PATH="$PWD/.ci/node/bin:$PATH"
