@@ -1,0 +1,74 @@
+{
+  "name": "devtrack",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/shared",
+    "apps/api",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=24.18.0 <25",
+    "npm": ">=11.16.0 <12"
+  },
+  "packageManager": "npm@11.16.0",
+  "scripts": {
+    "dev": "concurrently --kill-others --names web,api \"npm:dev:web\" \"npm:dev:api\"",
+    "dev:web": "npm run dev --workspace @devtrack/web",
+    "dev:api": "npm run dev --workspace @devtrack/api",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit && npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "test:integration": "npm run db:test:up && tsx scripts/test-integration.ts",
+    "test:coverage": "npm run db:test:up && npm run build --workspace @devtrack/shared && tsx scripts/test-integration.ts --coverage && npm run test:coverage --workspace @devtrack/web",
+    "test:e2e": "tsx scripts/test-e2e.ts",
+    "test:docker": "tsx scripts/test-e2e.ts --docker",
+    "build": "tsx scripts/build.ts",
+    "start": "npm run start --workspace @devtrack/api",
+    "postinstall": "npm run db:generate && npm run build --workspace @devtrack/shared",
+    "pretest:integration": "npm run build --workspace @devtrack/shared",
+    "db:up": "docker compose up -d --wait db",
+    "db:stop": "docker compose stop db",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:format": "prisma format",
+    "db:migrate": "prisma migrate dev",
+    "db:status": "prisma migrate status",
+    "db:seed": "prisma db seed",
+    "db:test:up": "docker compose --env-file .env.example --profile test up -d --wait db-test",
+    "db:test:stop": "docker compose --env-file .env.example --profile test stop db-test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^24.19.1",
+    "@vitest/coverage-v8": "^5.0.3",
+    "argon2": "^0.45.1",
+    "concurrently": "^10.0.5",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.9",
+    "prisma": "7.10.0",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "concurrently": {
+      "shell-quote": "1.11.0"
+    },
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    },
+    "prisma": {
+      "mysql2": "3.24.5"
+    }
+  }
+}
