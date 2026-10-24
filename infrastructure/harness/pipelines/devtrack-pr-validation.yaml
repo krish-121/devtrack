@@ -1,0 +1,112 @@
+pipeline:
+  name: devtrack-pr-validation
+  identifier: devtrack_pr_validation
+  projectIdentifier: DevTrack
+  orgIdentifier: default
+  description: Validate pull requests with the existing DevTrack quality checks. Never deploys.
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: github
+        repoName: devtrack
+        build: <+input>
+  stages:
+    - stage:
+        name: Validate
+        identifier: Validate
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Install pinned tools and dependencies
+                  identifier: Install
+                  spec:
+                    shell: Sh
+                    command: |-
+                      set -eu
+                      sh infrastructure/harness/scripts/setup-node.sh
+                      export PATH="$PWD/.ci/node/bin:$PATH"
+                      npm ci
+              - step:
+                  type: Run
+                  name: Format schema and lint
+                  identifier: Lint
+                  spec:
+                    shell: Sh
+                    command: |-
+                      set -eu
+                      export PATH="$PWD/.ci/node/bin:$PATH"
+                      npm run format:check
+                      npm run db:validate
+                      npm run lint
+              - step:
+                  type: Run
+                  name: Strict TypeScript
+                  identifier: Typecheck
+                  spec:
+                    shell: Sh
+                    command: |-
+                      set -eu
+                      export PATH="$PWD/.ci/node/bin:$PATH"
+                      npm run typecheck
+              - step:
+                  type: Run
+                  name: Unit and frontend tests
+                  identifier: Unit_tests
+                  spec:
+                    shell: Sh
+                    command: |-
+                      set -eu
+                      export PATH="$PWD/.ci/node/bin:$PATH"
+                      npm test
+              - step:
+                  type: Run
+                  name: PostgreSQL integration tests
+                  identifier: Integration_tests
+                  spec:
+                    shell: Sh
+                    command: |-
+                      set -eu
+                      export PATH="$PWD/.ci/node/bin:$PATH"
+                      npm run test:integration
+              - step:
+                  type: Run
+                  name: Coverage quality gates
+                  identifier: Coverage
+                  spec:
+                    shell: Sh
+                    command: |-
+                      set -eu
+                      export PATH="$PWD/.ci/node/bin:$PATH"
+                      npm run test:coverage
+              - step:
+                  type: Run
+                  name: Production build
+                  identifier: Build
+                  spec:
+                    shell: Sh
+                    command: |-
+                      set -eu
+                      export PATH="$PWD/.ci/node/bin:$PATH"
+                      npm run build
+              - step:
+                  type: Run
+                  name: Stop disposable PostgreSQL
+                  identifier: Cleanup
+                  spec:
+                    shell: Sh
+                    command: |-
+                      set -eu
+                      docker compose --env-file .env.example --profile test stop db-test
+                  when:
+                    stageStatus: All

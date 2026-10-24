@@ -1,0 +1,36 @@
+trigger:
+  name: DevTrack pull requests
+  identifier: devtrack_pull_requests
+  enabled: true
+  orgIdentifier: default
+  projectIdentifier: DevTrack
+  pipelineIdentifier: devtrack_pr_validation
+  source:
+    type: Webhook
+    spec:
+      type: Github
+      spec:
+        type: PullRequest
+        spec:
+          connectorRef: github
+          repoName: devtrack
+          autoAbortPreviousExecutions: true
+          payloadConditions:
+            - key: targetBranch
+              operator: Equals
+              value: main
+          headerConditions: []
+          actions:
+            - Open
+            - Reopen
+            - Synchronize
+  inputYaml: |
+    pipeline:
+      identifier: devtrack_pr_validation
+      properties:
+        ci:
+          codebase:
+            build:
+              type: PR
+              spec:
+                number: <+trigger.prNumber>
