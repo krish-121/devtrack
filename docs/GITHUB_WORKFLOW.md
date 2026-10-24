@@ -37,7 +37,12 @@ Those files were present locally but had never been committed. They are grouped
 by responsibility without inventing earlier development history. Future PRs
 should contain only the current change.
 
-The required Harness status context must be selected from an actual completed
-run before enabling branch protection. Do not invent a check name: a required
-check that is never reported would prevent every merge. Do not bypass failing
-checks or merge the bootstrap PR merely to finish this exercise.
+`main` requires a PR, an up-to-date branch, and the observed Harness status
+`devtrack_pr_validation-Validate`. These rules also apply to administrators.
+Force pushes and branch deletion are disabled, and conversations must be
+resolved. A required approval count of zero supports this solo learning repo;
+the owner must still review the PR before choosing to merge it. Do not bypass
+failed checks or merge the bootstrap PR merely to finish this exercise.
+
+The bootstrap PR is [#1](https://github.com/krish-121/devtrack/pull/1). See the
+[Phase 11/12 report](PHASE_11_12.md) for the real failing and passing CI runs.

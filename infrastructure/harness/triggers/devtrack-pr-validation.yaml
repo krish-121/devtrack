@@ -25,9 +25,10 @@ trigger:
             - Reopen
             - Synchronize
   inputYaml: |
-    pipeline:
-      id: devtrack_pr_validation
-      clone:
-        ref:
-          type: pull-request
-          number: <+trigger.prNumber>
+    inputs:
+      overlay:
+        clone:
+          ref:
+            number: <+trigger.prNumber>
+            type: pull-request
+          connector: github

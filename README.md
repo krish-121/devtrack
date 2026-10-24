@@ -1,15 +1,18 @@
 # DevTrack
 
 A learning-focused project and task management application. This repository
-currently implements **Phases 1–10**: repository tooling, PostgreSQL/Prisma,
+currently implements **Phases 1–12**: repository tooling, PostgreSQL/Prisma,
 cookie-based authentication, projects, tasks, a real dashboard, and application
-feedback/accessibility polish, testing hardening, and a production Docker image.
+feedback/accessibility polish, testing hardening, a production Docker image,
+and a GitHub PR workflow with verified Harness CI.
 The UI supports task status, priority, optional
 due dates, server-side search/filtering, and real project progress.
 
 See [phase status and learning walkthrough](docs/PROJECT_PROGRESS.md) and the
 [implemented API contract](docs/API.md). See the
-[Phase 9/10 report and learning notes](docs/PHASE_09_10.md) for the latest changes,
+[Phase 11/12 report and CI proof](docs/PHASE_11_12.md) for the latest changes,
+[GitHub workflow](docs/GITHUB_WORKFLOW.md), [Harness guide](docs/HARNESS.md),
+[Phase 9/10 report and learning notes](docs/PHASE_09_10.md),
 [testing guide](docs/TESTING.md), [Docker guide](docs/DOCKER.md),
 [Phase 7/8 report](docs/PHASE_07_08.md),
 and the [Phase 5/6 report](docs/PHASE_05_06.md) for authentication and tasks.

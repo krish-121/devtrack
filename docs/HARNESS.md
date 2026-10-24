@@ -22,8 +22,9 @@ separately using its PR number. Do not let an untrusted PR choose a pipeline
 with broader secrets or deployment permissions.
 
 The webhook listens for pull requests opened, reopened, or synchronized
-(updated), targeting `main`. The trigger's `inputYaml` selects
-`clone.ref.type: pull-request` and `<+trigger.prNumber>`. Harness reports the
+(updated), targeting `main`. The trigger's `inputYaml` supplies the v1
+`inputs.overlay.clone.ref` with `type: pull-request` and
+`number: <+trigger.prNumber>`. Harness reports the
 result to GitHub. This account's editor uses Harness v1 YAML: `id`, `repo`,
 `clone`, and stage `steps[].run.script`, rather than the older v0 `identifier`
 and `spec.execution.steps` layout. Organization/project scope is supplied by
@@ -76,6 +77,10 @@ or a saved pipeline definition alone does not complete this proof.
 After observing the status context that Harness actually reports, require it
 for `main` alongside a PR and up-to-date branch. Keep failed validation blocking
 merge. Review and merge remain separate from creating and testing the PR.
+
+The verified context is `devtrack_pr_validation-Validate`; it is now required
+on `main`, including for administrators. See [PHASE_11_12.md](PHASE_11_12.md)
+for the actual failed/fixed SHAs and Harness execution links.
 
 ## References
 

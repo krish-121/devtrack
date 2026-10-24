@@ -2,8 +2,8 @@
 
 Engineering source of truth: [PROJECT_SPEC.md](PROJECT_SPEC.md), section 134.
 Status checked on 24 October 2026 against the working tree and prior project
-instructions. Most implementation files were already uncommitted before the
-Phase 3/4 work; Git history alone does not represent the implementation status.
+instructions. Phases 1–10 were implemented locally before being imported as
+focused bootstrap commits in the Phase 11 pull request.
 
 ## Phase status
 
@@ -19,18 +19,19 @@ Phase 3/4 work; Git history alone does not represent the implementation status.
 | 8 — Error/Loading/Polish   | Implemented and verified              | Shared feedback states, actionable empty states, safe confirmation/form focus, responsive navigation and layout         |
 | 9 — Testing Hardening      | Implemented and verified              | Service tests, real database/API tests, frontend coverage gates, two isolated Chromium workflows                        |
 | 10 — Docker                | Implemented and verified              | Multi-stage production image; same-origin SPA/API, non-root runtime, health/shutdown and real container workflow checks |
-| 11 — GitHub Workflow       | Not completed                         | Local Git repository exists; PR protections/workflow need their own phase                                               |
-| 12 — Harness PR Pipeline   | Not started                           | No real pipeline verification yet                                                                                       |
+| 11 — GitHub Workflow       | Implemented and verified              | Focused commits, CI branch, PR template, open PR #1, enforced main-branch protection                                    |
+| 12 — Harness PR Pipeline   | Implemented and verified              | Real GitHub PR webhook, Harness Cloud checks, deliberate TS2322 failure followed by successful fixed-commit execution   |
 | 13 — Artifact Pipeline     | Not started                           | No application artifact published                                                                                       |
 | 14 — Harness CD            | Not started                           | No Cloud Run deployment                                                                                                 |
 | 15 — Documentation         | Not completed as a full-project phase | Current implementation is documented; final architecture/delivery walkthroughs come later                               |
 | 16 — Learning Pass         | Developer work remains                | Understanding cannot be certified by generated code or passing tests                                                    |
 
-Phases 1–10 are now implemented. See [PHASE_09_10.md](PHASE_09_10.md) for the
-current testing/Docker report, [PHASE_07_08.md](PHASE_07_08.md) for dashboard/polish,
+Phases 1–12 are now implemented. See [PHASE_11_12.md](PHASE_11_12.md) for the
+GitHub/Harness report and execution links, [PHASE_09_10.md](PHASE_09_10.md) for the
+testing/Docker report, [PHASE_07_08.md](PHASE_07_08.md) for dashboard/polish,
 and [PHASE_05_06.md](PHASE_05_06.md) for the
 authentication/task report. The original Phase 3/4 work and its tests/documentation
-are recorded below. Phase 11 remains the next unimplemented phase. A phase's code completion does not certify
+are recorded below. Phase 13 is the next implementation phase and has not been started. A phase's code completion does not certify
 that the developer can explain it yet. The study checks below support that goal.
 
 ## Trace a project creation
