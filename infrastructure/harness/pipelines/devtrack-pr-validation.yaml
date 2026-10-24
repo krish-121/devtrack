@@ -1,4 +1,3 @@
-version: 1
 pipeline:
   name: devtrack-pr-validation
   id: devtrack_pr_validation

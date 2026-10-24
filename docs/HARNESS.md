@@ -28,6 +28,9 @@ result to GitHub. This account's editor uses Harness v1 YAML: `id`, `repo`,
 `clone`, and stage `steps[].run.script`, rather than the older v0 `identifier`
 and `spec.execution.steps` layout. Organization/project scope is supplied by
 the Harness resource, rather than fields in the v1 pipeline document.
+The optional top-level `version: 1` marker is omitted: this account's backend
+rejected it while the v1 editor/schema accepted it. The same document without
+that marker saved successfully.
 
 ## What runs
 
