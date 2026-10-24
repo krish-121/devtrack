@@ -5,10 +5,14 @@ currently implements **Phases 1–12**: repository tooling, PostgreSQL/Prisma,
 cookie-based authentication, projects, tasks, a real dashboard, and application
 feedback/accessibility polish, testing hardening, a production Docker image,
 and a GitHub PR workflow with verified Harness CI.
+Phase 13/14 release code is prepared locally; registry publishing and live
+Cloud Run deployment remain pending the user's no-charge hosting decision.
 The UI supports task status, priority, optional
 due dates, server-side search/filtering, and real project progress.
 
-See [phase status and learning walkthrough](docs/PROJECT_PROGRESS.md) and the
+See the [Phase 13/14 status](docs/PHASE_13_14.md),
+[deployment setup and trial lifecycle](docs/DEPLOYMENT.md),
+[phase status and learning walkthrough](docs/PROJECT_PROGRESS.md) and the
 [implemented API contract](docs/API.md). See the
 [Phase 11/12 report and CI proof](docs/PHASE_11_12.md) for the latest changes,
 [GitHub workflow](docs/GITHUB_WORKFLOW.md), [Harness guide](docs/HARNESS.md),
@@ -78,6 +82,8 @@ On macOS/Linux, use `cp .env.example .env`.
 | `DATABASE_URL`        | Required                | PostgreSQL connection URL including a host and database name                |
 | `APP_ORIGIN`          | `http://localhost:5173` | Exact browser origin without trailing slash; requires HTTPS in production   |
 | `AUTH_RATE_LIMIT_MAX` | `20`                    | Combined login/register attempts per IP per 15 minutes                      |
+| `APP_VERSION`         | `development`           | Full lowercase Git SHA baked into release images; public version metadata   |
+| `TRUST_PROXY_HOPS`    | `0`                     | Trusted reverse-proxy hop count, 0–5; review the actual ingress topology    |
 | `POSTGRES_PASSWORD`   | Required by Compose     | Local database password; must match the password in `DATABASE_URL`          |
 
 The API's dev/start commands load the root `.env` using Node's built-in loader;
@@ -113,33 +119,36 @@ migration workflow, test isolation, SQL examples, and troubleshooting.
 
 ## Commands
 
-| Command                                        | Purpose                                                                        |
-| ---------------------------------------------- | ------------------------------------------------------------------------------ |
-| `npm run dev`                                  | Run the web and API watchers together; stop both when either exits             |
-| `npm run dev:web`                              | Run Vite only                                                                  |
-| `npm run dev:api`                              | Run the TypeScript API watcher only                                            |
-| `npm run lint`                                 | Lint all workspaces and tool configuration; warnings fail the check            |
-| `npm run format`                               | Format repository code and configuration                                       |
-| `npm run format:check`                         | Check formatting without editing files                                         |
-| `npm run typecheck`                            | Check every workspace, including API tests                                     |
-| `npm test`                                     | Run environment, frontend workflow, and HTTP client tests without PostgreSQL   |
-| `npm run test:integration`                     | Start the isolated test DB, apply migrations, and run HTTP/database/seed tests |
-| `npm run test:coverage`                        | API + real PostgreSQL and frontend coverage, with quality thresholds           |
-| `npm run test:e2e`                             | Build and run two Chromium workflows using a disposable database               |
-| `npm run test:docker`                          | Build/run the image, run browser workflows, verify production smoke checks     |
-| `npm run build`                                | Build shared JavaScript/declarations, the API, and the web app, in that order  |
-| `npm start`                                    | Run the compiled API after building                                            |
-| `npm run preview --workspace @devtrack/web`    | Preview the built web app locally                                              |
-| `npm run db:up`                                | Start the development PostgreSQL service and wait for readiness                |
-| `npm run db:stop`                              | Stop development PostgreSQL, preserving its volume                             |
-| `npm run db:generate`                          | Regenerate Prisma Client after schema edits; also runs after install           |
-| `npm run db:validate`                          | Validate the Prisma schema                                                     |
-| `npm run db:format`                            | Format the Prisma schema                                                       |
-| `npm run db:migrate -- --name meaningful_name` | Create/apply development migrations                                            |
-| `npm run db:status`                            | Inspect development migration status                                           |
-| `npm run db:seed`                              | Explicitly load development demo data                                          |
-| `npm run db:test:up`                           | Start the separate disposable PostgreSQL test service on port 5433             |
-| `npm run db:test:stop`                         | Stop the test service and discard its in-memory data                           |
+| Command                                             | Purpose                                                                        |
+| --------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `npm run dev`                                       | Run the web and API watchers together; stop both when either exits             |
+| `npm run dev:web`                                   | Run Vite only                                                                  |
+| `npm run dev:api`                                   | Run the TypeScript API watcher only                                            |
+| `npm run lint`                                      | Lint all workspaces and tool configuration; warnings fail the check            |
+| `npm run format`                                    | Format repository code and configuration                                       |
+| `npm run format:check`                              | Check formatting without editing files                                         |
+| `npm run typecheck`                                 | Check every workspace, including API tests                                     |
+| `npm test`                                          | Run environment, frontend workflow, and HTTP client tests without PostgreSQL   |
+| `npm run test:integration`                          | Start the isolated test DB, apply migrations, and run HTTP/database/seed tests |
+| `npm run test:coverage`                             | API + real PostgreSQL and frontend coverage, with quality thresholds           |
+| `npm run test:e2e`                                  | Build and run two Chromium workflows using a disposable database               |
+| `npm run test:docker`                               | Build/run the image, run browser workflows, verify production smoke checks     |
+| `npm run artifact:build -- [image-repository]`      | Build a clean committed SHA-tagged image locally and record its image ID       |
+| `npm run smoke:deployment -- HTTPS_ORIGIN FULL_SHA` | Check deployed health, exact commit version and frontend                       |
+| `npm run db:migrate:production`                     | Apply reviewed migrations once using explicit production environment/secret    |
+| `npm run build`                                     | Build shared JavaScript/declarations, the API, and the web app, in that order  |
+| `npm start`                                         | Run the compiled API after building                                            |
+| `npm run preview --workspace @devtrack/web`         | Preview the built web app locally                                              |
+| `npm run db:up`                                     | Start the development PostgreSQL service and wait for readiness                |
+| `npm run db:stop`                                   | Stop development PostgreSQL, preserving its volume                             |
+| `npm run db:generate`                               | Regenerate Prisma Client after schema edits; also runs after install           |
+| `npm run db:validate`                               | Validate the Prisma schema                                                     |
+| `npm run db:format`                                 | Format the Prisma schema                                                       |
+| `npm run db:migrate -- --name meaningful_name`      | Create/apply development migrations                                            |
+| `npm run db:status`                                 | Inspect development migration status                                           |
+| `npm run db:seed`                                   | Explicitly load development demo data                                          |
+| `npm run db:test:up`                                | Start the separate disposable PostgreSQL test service on port 5433             |
+| `npm run db:test:stop`                              | Stop the test service and discard its in-memory data                           |
 
 Before committing, run:
 
@@ -185,6 +194,7 @@ apps/api/
   src/database/prisma.ts      One shared Prisma Client/connection pool per process
   src/generated/prisma/       Generated database client (ignored by Git)
   src/modules/health/         Health route and thin controller
+  src/modules/version/        Public commit metadata route and thin controller
   src/modules/projects/       Project routes, schemas, controllers, services, repository
   src/modules/auth/           Auth routes, session/password services and persistence
   src/modules/tasks/          Owner-scoped task CRUD, filtering and persistence
@@ -193,7 +203,7 @@ apps/api/
   src/middleware/             JSON 404 and unexpected-error responses
   src/logging/logger.ts       Pino logger
 packages/shared/
-  src/api.ts                  Health and error response contracts
+  src/api.ts                  Health, version and error response contracts
   src/project.ts              Project request and response DTO contracts
   src/auth.ts                 Shared authentication schemas and DTOs
   src/task.ts                 Shared task schemas, statuses, priorities and DTOs
@@ -207,6 +217,11 @@ prisma/
 scripts/build.ts              Deterministic production workspace build
 scripts/test-integration.ts   Migrate the isolated test DB and run integrations/coverage
 scripts/test-e2e.ts           Isolated browser and Docker verification lifecycle
+scripts/build-artifact.ts     Clean-commit image build and local receipt
+scripts/migrate-production.ts Explicit production migration entry point
+scripts/smoke-deployment.ts   External health/version/frontend verification
+infrastructure/harness/       PR/release pipeline and trigger definitions
+infrastructure/cloud-run/     Single-container production service manifest
 e2e/                          Two real browser workflows and fixed test configuration
 playwright.config.ts          Chromium configuration; never reuse a development server
 Dockerfile                    Multi-stage build and non-root production runtime
@@ -293,6 +308,7 @@ The setup follows the official [Vite configuration documentation](https://vite.d
 [typescript-eslint typed linting guidance](https://typescript-eslint.io/getting-started/typed-linting/),
 and [Express error-handling guidance](https://expressjs.com/en/guide/error-handling/).
 
-GitHub workflow, Harness, GCP, and deployment remain in later phases. Project
+GitHub workflow and Harness PR validation are verified. Cloud release definitions
+are prepared but publishing/deployment are not yet verified. Project
 deletion uses the existing database cascade and permanently removes its tasks;
 the UI requires explicit confirmation. Archiving is not implemented.

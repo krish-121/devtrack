@@ -1,8 +1,18 @@
-# Implemented API — through Phase 10
+# Implemented API
 
 Base path: `/api/v1`. Successful JSON responses use `{ "data": ... }`.
 Failures use `{ "error": { "code": "...", "message": "..." } }`.
 Validation failures also include `error.details`, a field-to-message object.
+
+## Health and build metadata
+
+Public `GET /health` returns `{ "data": { "status": "ok" } }`. It checks process
+liveness, not database readiness. Public `GET /version` returns
+`{ "data": { "version": "development" } }` locally, or the full lowercase Git
+commit SHA baked into a release image. Version responses use `Cache-Control:
+no-store` and expose no database URL, account identity or secret. The deployment
+smoke requires an exact match to its expected commit, alongside health/frontend
+success. Both payloads use schemas from the existing shared contract package.
 
 ## Authentication and request boundaries
 
@@ -39,7 +49,9 @@ PostgreSQL, so replaying its old cookie fails.
 Login/register share an in-memory rate limiter: default 20 requests per IP per
 15 minutes, configured by `AUTH_RATE_LIMIT_MAX`. Rejection returns 429 with
 `RATE_LIMITED` and Retry-After. This limit is per process and resets on restart.
-No proxy headers are trusted by default; deployment must review proxy/IP settings.
+No proxy headers are trusted by default. `TRUST_PROXY_HOPS` accepts a bounded
+integer (0–5); deployment must verify it against the real proxy topology so
+clients have separate rate-limit buckets and cannot spoof a trusted address.
 
 Mutation requests reject a different `Origin` or cross-site `Sec-Fetch-Site` with
 `403 ORIGIN_REJECTED`. POST/PATCH require application/json (`415 JSON_REQUIRED`).

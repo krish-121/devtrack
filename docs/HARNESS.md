@@ -1,5 +1,11 @@
 # Harness PR validation
 
+Release publishing/deployment is documented separately in
+[DEPLOYMENT.md](DEPLOYMENT.md). Its versioned YAML is prepared, with execution
+disabled pending the no-cost hosting decision. It has not been installed or
+validated against live Google Cloud resources. The PR pipeline below remains
+non-deploying and does not receive production secrets.
+
 The pipeline is named `devtrack-pr-validation` (identifier
 `devtrack_pr_validation`). It belongs to project `DevTrack` in organization
 `default`. Its versioned definition is

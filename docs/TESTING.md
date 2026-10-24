@@ -14,13 +14,14 @@ the application image.
 
 ## Test layers and commands
 
-| Command                    | Boundary exercised                                                                                                           |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `npm test`                 | API unit/configuration/service tests and frontend/client behavior in jsdom; no database required                             |
-| `npm run test:integration` | Express/Supertest with real PostgreSQL, migrations, constraints, ownership, sessions, CRUD, summary, seed and static routing |
-| `npm run test:coverage`    | API unit + integration coverage together, then frontend coverage                                                             |
-| `npm run test:e2e`         | Two real Chromium workflows against the compiled app and a disposable PostgreSQL service                                     |
-| `npm run test:docker`      | The same browser workflows against the built image, then default production-mode smoke checks                                |
+| Command                                             | Boundary exercised                                                                                                           |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `npm test`                                          | API unit/configuration/service tests and frontend/client behavior in jsdom; no database required                             |
+| `npm run test:integration`                          | Express/Supertest with real PostgreSQL, migrations, constraints, ownership, sessions, CRUD, summary, seed and static routing |
+| `npm run test:coverage`                             | API unit + integration coverage together, then frontend coverage                                                             |
+| `npm run test:e2e`                                  | Two real Chromium workflows against the compiled app and a disposable PostgreSQL service                                     |
+| `npm run test:docker`                               | The same browser workflows against the built image, then default production-mode smoke checks                                |
+| `npm run smoke:deployment -- HTTPS_ORIGIN FULL_SHA` | External liveness, exact released commit and frontend document; no account mutations                                         |
 
 Tests exercise behavior instead of internal React state or mocked database
 semantics. Service unit tests mock the repository boundary to focus on business
@@ -86,7 +87,8 @@ The container smoke phase then restarts the same image with default production
 mode, an HTTPS application origin and a different configured PORT. It verifies
 real database-backed registration/session lookup with Secure/HttpOnly cookies,
 static/API responses, Docker health, runtime contents, non-root user and graceful
-SIGTERM exit. The HTTP client sends the configured HTTPS Origin explicitly for
+SIGTERM exit. It also checks baked-in version metadata against the OCI revision,
+runs the deployment smoke, and proves a wrong expected SHA fails. The HTTP client sends the configured HTTPS Origin explicitly for
 that API smoke check; this does not test TLS termination itself or turn off the
 production HTTPS requirement. TLS/deployment remain later infrastructure work.
 
@@ -115,7 +117,8 @@ test credentials/session state and must stay ignored. Open the latest report:
 npx playwright show-report
 ```
 
-See [PHASE_09_10.md](PHASE_09_10.md) for measured coverage and verified commands.
+See [PHASE_13_14.md](PHASE_13_14.md) for current checks and
+[PHASE_09_10.md](PHASE_09_10.md) for the original hardening report.
 The setup follows the official [Playwright web-server guide](https://playwright.dev/docs/test-webserver),
 [browser installation guide](https://playwright.dev/docs/browsers), and
 [Vitest coverage guide](https://vitest.dev/guide/coverage.html).
