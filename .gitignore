@@ -1,0 +1,17 @@
+node_modules/
+apps/api/src/generated/
+dist/
+coverage/
+playwright-report/
+test-results/
+.ci/
+*.tsbuildinfo
+*.log
+.env
+.env.*
+!.env.example
+service-account*.json
+*.pem
+*.key
+.DS_Store
+Thumbs.db

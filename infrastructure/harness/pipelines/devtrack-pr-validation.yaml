@@ -1,0 +1,79 @@
+pipeline:
+  name: devtrack-pr-validation
+  id: devtrack_pr_validation
+  description: Validate pull requests with the existing DevTrack quality checks. Never deploys.
+  repo:
+    connector: github
+    name: devtrack
+  clone:
+    enabled: true
+    ref: <+input>
+  stages:
+    - name: Validate
+      id: Validate
+      runtime: cloud
+      platform:
+        os: linux
+        arch: amd64
+      steps:
+        - name: Install pinned tools and dependencies
+          id: Install
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              sh infrastructure/harness/scripts/setup-node.sh
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm ci
+        - name: Format schema and lint
+          id: Lint
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm run format:check
+              npm run db:validate
+              npm run lint
+        - name: Strict TypeScript
+          id: Typecheck
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm run typecheck
+        - name: Unit and frontend tests
+          id: Unit_tests
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm test
+        - name: PostgreSQL integration tests
+          id: Integration_tests
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              trap 'docker compose --env-file .env.example --profile test stop db-test' EXIT
+              npm run test:integration
+        - name: Coverage quality gates
+          id: Coverage
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              trap 'docker compose --env-file .env.example --profile test stop db-test' EXIT
+              npm run test:coverage
+        - name: Production build
+          id: Build
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm run build

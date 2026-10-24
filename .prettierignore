@@ -1,0 +1,11 @@
+node_modules/
+apps/api/src/generated/
+dist/
+coverage/
+playwright-report/
+test-results/
+.ci/
+package-lock.json
+# Keep the supplied engineering instructions and specification unchanged.
+AGENTS.md
+docs/PROJECT_SPEC.md
