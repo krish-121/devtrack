@@ -26,7 +26,7 @@ release pipeline is saved but has not run; its trigger is disabled and
   `devtrack` and simultaneous deployments `false`. Runtime execution is unverified.
 - Pipeline `devtrack_release` is saved with Validate, Package and Deploy Production.
   Its primary GAR artifact `devtrack_image` selects package `devtrack` and the
-  full commit from `codebase.sha`. The saved pipeline YAML
+  full commit from `inputs.release_commit`. The saved pipeline YAML
   was copied back from the editor and matched the prepared definition.
 - The infrastructure UI's fixed project dropdown required an unavailable
   delegate. Its supported Expression mode saved the pipeline's explicit project
@@ -120,7 +120,7 @@ which ones already exist:
 | GCP connector    | `gcp`, short-lived OIDC/Workload Identity Federation preferred                                                                 |
 | Service          | `devtrack`, Google Cloud Run deployment type                                                                                   |
 | Manifest source  | GitHub connector `github`, this repository, `infrastructure/cloud-run/devtrack.yaml`, fetched by the release's full commit SHA |
-| Artifact source  | GAR/Docker, approved project/region/repository, package `devtrack`; explicit version equal to `codebase.sha`                   |
+| Artifact source  | GAR/Docker, approved project/region/repository, package `devtrack`; explicit version equal to `inputs.release_commit`          |
 | Environment      | `production`                                                                                                                   |
 | Infrastructure   | `cloud_run`, approved GCP project/region and `gcp` connector; concurrent deployments disabled/queued                           |
 | Google secret    | `production_database_url`, numeric secret version matching `database_secret_version`                                           |
@@ -131,13 +131,16 @@ Harness orchestrates the job and its secret reference; its CI Run steps do not
 receive the database credential. This avoids duplicating the secret into a second
 store. No secret values belong in YAML or execution logs.
 
-The first real release stopped before publishing because this account did not
-provide the documented `HARNESS_OUTPUT` file variable. The pipeline now uses
-Harness's built-in `codebase.sha` for image tags, build metadata, manifest fetch,
-artifact selection and smoke expectations. Its first step verifies that this
-value equals the clean checked-out commit and current remote `main`. This avoids
-a custom cross-stage output and fails closed if metadata and source disagree.
-See the official [commit expression reference](https://developer.harness.io/harness-platform/3.0/in-harness-3.0/pipelines/expressions).
+The first two real releases stopped before publishing: this account did not
+provide the documented `HARNESS_OUTPUT` file variable or resolve `codebase.sha`
+into the Run step's environment. The pipeline therefore requires the explicit
+`release_commit` input for image tags, build metadata, manifest fetch, artifact
+selection and smoke expectations. Its first step verifies that this input equals
+the clean checked-out commit and current remote `main`. A mismatched or short SHA
+fails before publishing. For manual execution, supply the same full SHA in both
+the clone configuration and `release_commit`. The main-push trigger supplies both
+from `<+trigger.commitSha>`. No undocumented metadata alias or custom cross-stage
+output is required; all release guards remain enabled.
 
 Use a dedicated Docker-format GAR repository with immutable tags. Resolve and
 record its manifest digest after publishing. The service must select the exact
