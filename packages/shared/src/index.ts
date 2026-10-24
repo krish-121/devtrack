@@ -1,4 +1,9 @@
-export type { ApiErrorResponse, HealthResponse } from './api.js';
+export { healthResponseSchema, versionResponseSchema } from './api.js';
+export type {
+  ApiErrorResponse,
+  HealthResponse,
+  VersionResponse,
+} from './api.js';
 export * from './auth.js';
 export * from './task.js';
 export * from './dashboard.js';

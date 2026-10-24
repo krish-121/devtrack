@@ -29,7 +29,10 @@ RUN npm ci --omit=dev --omit=optional --omit=peer --ignore-scripts --workspace @
     && npm rebuild argon2
 
 FROM base AS runtime
-ENV NODE_ENV=production PORT=3000
+ARG APP_VERSION=development
+ENV NODE_ENV=production PORT=3000 APP_VERSION=$APP_VERSION
+LABEL org.opencontainers.image.source="https://github.com/krish-121/devtrack" \
+    org.opencontainers.image.revision=$APP_VERSION
 COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
 COPY --from=production-dependencies --chown=node:node /app/apps/api/package.json ./apps/api/package.json
 COPY --from=production-dependencies --chown=node:node /app/packages/shared/package.json ./packages/shared/package.json

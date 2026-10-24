@@ -22,6 +22,7 @@ const compose = [
   'e2e',
 ];
 const containerName = `devtrack-e2e-${process.pid}`;
+const imageVersion = '0123456789abcdef0123456789abcdef01234567';
 let containerStarted = false;
 function run(command: string, args: string[], capture = false) {
   return runCommand(command, args, { env: environment, capture });
@@ -94,7 +95,14 @@ try {
     'deploy',
   ]);
   if (dockerMode) {
-    run('docker', ['build', '--tag', 'devtrack:local', '.']);
+    run('docker', [
+      'build',
+      '--build-arg',
+      `APP_VERSION=${imageVersion}`,
+      '--tag',
+      'devtrack:local',
+      '.',
+    ]);
     startContainer(false);
     await waitForHealth();
   } else {
@@ -110,6 +118,31 @@ try {
     // HTTP above used test mode, preserving HTTPS/Secure cookie policy in prod.
     startContainer(true);
     await waitForHealth();
+    assert.equal(
+      run(
+        'docker',
+        [
+          'image',
+          'inspect',
+          '--format',
+          '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+          'devtrack:local',
+        ],
+        true,
+      ).trim(),
+      imageVersion,
+    );
+    const smokeArguments = [
+      '--import',
+      'tsx',
+      `${workspaceRoot}/scripts/smoke-deployment.ts`,
+      'http://localhost:4174',
+    ];
+    run(process.execPath, [...smokeArguments, imageVersion]);
+    assert.throws(
+      () => run(process.execPath, [...smokeArguments, 'f'.repeat(40)], true),
+      /Deployed version does not match/,
+    );
     const page = await fetch('http://localhost:4174/projects/example');
     assert.equal(page.status, 200);
     assert.match(await page.text(), /<div id="root"><\/div>/);

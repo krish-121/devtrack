@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
 const envSchema = z.object({
+  APP_VERSION: z
+    .string()
+    .regex(
+      /^(development|[a-f0-9]{40})$/,
+      'Use a full lowercase Git commit SHA.',
+    )
+    .default('development'),
   APP_ORIGIN: z
     .url({ protocol: /^https?$/ })
     .refine(
@@ -9,6 +16,7 @@ const envSchema = z.object({
     )
     .default('http://localhost:5173'),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(20),
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(0),
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
@@ -48,12 +56,14 @@ export function parseEnv(environment: NodeJS.ProcessEnv) {
     );
 
   return {
+    appVersion: result.data.APP_VERSION,
     nodeEnv: result.data.NODE_ENV,
     port: result.data.PORT,
     logLevel: result.data.LOG_LEVEL,
     databaseUrl: result.data.DATABASE_URL,
     appOrigin: result.data.APP_ORIGIN,
     authRateLimitMax: result.data.AUTH_RATE_LIMIT_MAX,
+    trustProxyHops: result.data.TRUST_PROXY_HOPS,
   };
 }
 
