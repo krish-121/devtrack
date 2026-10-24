@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { describe, it } from 'vitest';
 import { app } from './app.js';
+import { env } from './config/env.js';
 
 describe('API foundation', () => {
   it('reports liveness without requiring a database', async () => {
@@ -8,6 +9,14 @@ describe('API foundation', () => {
       .get('/api/v1/health')
       .expect('Content-Type', /json/)
       .expect(200, { data: { status: 'ok' } });
+  });
+
+  it('reports the deployed version without exposing configuration or caching it', async () => {
+    await request(app)
+      .get('/api/v1/version')
+      .expect('Cache-Control', 'no-store')
+      .expect('Content-Type', /json/)
+      .expect(200, { data: { version: env.appVersion } });
   });
 
   it('returns the standard JSON error for unknown routes', async () => {

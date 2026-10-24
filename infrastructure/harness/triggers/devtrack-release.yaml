@@ -1,0 +1,30 @@
+trigger:
+  name: DevTrack reviewed main releases
+  identifier: devtrack_main_releases
+  enabled: false
+  orgIdentifier: default
+  projectIdentifier: DevTrack
+  pipelineIdentifier: devtrack_release
+  source:
+    type: Webhook
+    spec:
+      type: Github
+      spec:
+        type: Push
+        spec:
+          connectorRef: github
+          repoName: devtrack
+          payloadConditions:
+            - key: targetBranch
+              operator: Equals
+              value: main
+          headerConditions: []
+  inputYaml: |
+    inputs:
+      release_enabled: false
+      overlay:
+        clone:
+          connector: github
+          ref:
+            type: commit
+            sha: <+trigger.commitSha>

@@ -7,12 +7,14 @@ describe('environment configuration', () => {
 
   it('requires database configuration and defaults optional settings', () => {
     expect(parseEnv({ DATABASE_URL: databaseUrl })).toEqual({
+      appVersion: 'development',
       nodeEnv: 'development',
       port: 3000,
       logLevel: 'info',
       databaseUrl,
       appOrigin: 'http://localhost:5173',
       authRateLimitMax: 20,
+      trustProxyHops: 0,
     });
   });
 
@@ -24,14 +26,18 @@ describe('environment configuration', () => {
         APP_ORIGIN: 'https://devtrack.example',
         PORT: '8080',
         LOG_LEVEL: 'warn',
+        APP_VERSION: '0123456789abcdef0123456789abcdef01234567',
+        TRUST_PROXY_HOPS: '1',
       }),
     ).toEqual({
+      appVersion: '0123456789abcdef0123456789abcdef01234567',
       nodeEnv: 'production',
       port: 8080,
       logLevel: 'warn',
       databaseUrl,
       appOrigin: 'https://devtrack.example',
       authRateLimitMax: 20,
+      trustProxyHops: 1,
     });
   });
 
@@ -49,6 +55,15 @@ describe('environment configuration', () => {
       parseEnv({ DATABASE_URL: databaseUrl, NODE_ENV: 'staging' }),
     ).toThrow(/NODE_ENV:/);
   });
+
+  it.each(['latest', 'abcdef0', 'ABCDEF0123456789abcdef0123456789abcdef0123'])(
+    'rejects an untraceable or malformed application version %j',
+    (appVersion) => {
+      expect(() =>
+        parseEnv({ DATABASE_URL: databaseUrl, APP_VERSION: appVersion }),
+      ).toThrow(/APP_VERSION:/);
+    },
+  );
 
   it('requires an HTTPS origin in production and rejects malformed origins', () => {
     expect(() =>
@@ -73,6 +88,15 @@ describe('environment configuration', () => {
       parseEnv({ DATABASE_URL: databaseUrl, LOG_LEVEL: 'verbose' }),
     ).toThrow(/LOG_LEVEL:/);
   });
+
+  it.each(['true', '-1', '1.5', '6'])(
+    'rejects an unsafe or invalid trusted proxy count %j',
+    (hops) => {
+      expect(() =>
+        parseEnv({ DATABASE_URL: databaseUrl, TRUST_PROXY_HOPS: hops }),
+      ).toThrow(/TRUST_PROXY_HOPS:/);
+    },
+  );
 
   it.each([
     undefined,

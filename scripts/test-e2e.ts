@@ -22,6 +22,11 @@ const compose = [
   'e2e',
 ];
 const containerName = `devtrack-e2e-${process.pid}`;
+const imageVersion = '0123456789abcdef0123456789abcdef01234567';
+const socketMount =
+  'type=volume,source=devtrack-e2e_postgres-socket-e2e,target=/cloudsql/devtrack-test,readonly';
+const containerDatabaseUrl =
+  'postgresql://devtrack:devtrack_e2e@localhost/devtrack_e2e?host=%2Fcloudsql%2Fdevtrack-test';
 let containerStarted = false;
 function run(command: string, args: string[], capture = false) {
   return runCommand(command, args, { env: environment, capture });
@@ -71,6 +76,8 @@ function startContainer(production: boolean) {
     'devtrack-e2e_default',
     '--publish',
     `127.0.0.1:4174:${production ? '8080' : '3000'}`,
+    '--mount',
+    socketMount,
     '--health-interval',
     '1s',
     '--env',
@@ -78,7 +85,7 @@ function startContainer(production: boolean) {
     '--env',
     `APP_ORIGIN=${production ? 'https://devtrack.example.test' : 'http://localhost:4174'}`,
     '--env',
-    'DATABASE_URL=postgresql://devtrack:devtrack_e2e@db-e2e:5432/devtrack_e2e',
+    `DATABASE_URL=${containerDatabaseUrl}`,
     ...(production
       ? []
       : ['--env', 'NODE_ENV=test', '--env', 'AUTH_RATE_LIMIT_MAX=1000']),
@@ -88,16 +95,50 @@ function startContainer(production: boolean) {
 }
 try {
   run('docker', [...compose, 'up', '-d', '--wait', 'db-e2e']);
-  run(process.execPath, [
-    `${workspaceRoot}/node_modules/prisma/build/index.js`,
-    'migrate',
-    'deploy',
-  ]);
   if (dockerMode) {
-    run('docker', ['build', '--tag', 'devtrack:local', '.']);
+    run('docker', [
+      'build',
+      '--target',
+      'migrations',
+      '--build-arg',
+      `APP_VERSION=${imageVersion}`,
+      '--tag',
+      'devtrack-migrations:local',
+      '.',
+    ]);
+    const migrationArguments = [
+      'run',
+      '--rm',
+      '--network',
+      'none',
+      '--mount',
+      socketMount,
+      '--env',
+      'APP_ORIGIN=https://devtrack.example.test',
+      '--env',
+      `DATABASE_URL=${containerDatabaseUrl}`,
+      'devtrack-migrations:local',
+    ];
+    // A fresh database is migrated by the release-tools container, using the
+    // same Unix socket URL form as Cloud Run. A second release is a safe no-op.
+    run('docker', migrationArguments);
+    run('docker', migrationArguments);
+    run('docker', [
+      'build',
+      '--build-arg',
+      `APP_VERSION=${imageVersion}`,
+      '--tag',
+      'devtrack:local',
+      '.',
+    ]);
     startContainer(false);
     await waitForHealth();
   } else {
+    run(process.execPath, [
+      `${workspaceRoot}/node_modules/prisma/build/index.js`,
+      'migrate',
+      'deploy',
+    ]);
     run(process.execPath, [npmCli, 'run', 'build']);
   }
   run(process.execPath, [
@@ -110,6 +151,31 @@ try {
     // HTTP above used test mode, preserving HTTPS/Secure cookie policy in prod.
     startContainer(true);
     await waitForHealth();
+    assert.equal(
+      run(
+        'docker',
+        [
+          'image',
+          'inspect',
+          '--format',
+          '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+          'devtrack:local',
+        ],
+        true,
+      ).trim(),
+      imageVersion,
+    );
+    const smokeArguments = [
+      '--import',
+      'tsx',
+      `${workspaceRoot}/scripts/smoke-deployment.ts`,
+      'http://localhost:4174',
+    ];
+    run(process.execPath, [...smokeArguments, imageVersion]);
+    assert.throws(
+      () => run(process.execPath, [...smokeArguments, 'f'.repeat(40)], true),
+      /Deployed version does not match/,
+    );
     const page = await fetch('http://localhost:4174/projects/example');
     assert.equal(page.status, 200);
     assert.match(await page.text(), /<div id="root"><\/div>/);

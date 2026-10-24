@@ -11,6 +11,12 @@ docker build --tag devtrack:local .
 npm run test:docker
 ```
 
+For a traceable committed artifact, use `npm run artifact:build` from a clean
+working tree. It tags the image with full HEAD, passes `APP_VERSION` to the build,
+checks the OCI revision label and writes an ignored local receipt. It never
+pushes an image. See [DEPLOYMENT.md](DEPLOYMENT.md) for GAR/Harness setup and
+the current no-cost hosting constraint.
+
 The second command builds the image, starts a disposable E2E PostgreSQL service,
 applies migrations, runs both Chromium workflows against the container, verifies
 default production-mode behavior, and cleans up its containers/test data. It
@@ -53,7 +59,8 @@ image defaults to `NODE_ENV=production` and `PORT=3000`; PORT can be overridden.
 Required variables are `DATABASE_URL` and the actual HTTPS `APP_ORIGIN`.
 `LOG_LEVEL` and `AUTH_RATE_LIMIT_MAX` keep their existing validated meanings.
 Existing opaque database sessions do not use a signing secret; no unused
-`AUTH_SECRET` or deployment-specific configuration was introduced.
+`AUTH_SECRET` is needed. `APP_VERSION` is public metadata baked at build time;
+`TRUST_PROXY_HOPS` defaults to zero and must match the hosting ingress when set.
 
 For a future real environment, create a private `.env.production.local` file
 (ignored by Git) with the correct values, including PORT=8080 for this example:
@@ -88,18 +95,23 @@ Helmet's existing security headers remain enabled.
 Never seed production or run `migrate dev` at container startup. Apply reviewed
 migrations with `prisma migrate deploy` as a separate authorized operation before
 running a new application version. The slim runtime deliberately omits Prisma
-CLI, migration sources and build tooling.
+CLI, migration sources and build tooling. Harness publishes a separate
+`migrations` target and runs it as a one-time Cloud Run Job before deployment.
+Its `npm run db:migrate:production` entry point requires production mode and a full SHA,
+and never loads development `.env` values in production mode.
 
-The existing build stage can be used as a separate tools image if needed:
+Build that separate tools image locally with explicit public version metadata:
 
 ```sh
-docker build --target build --tag devtrack:migrations .
-docker run --rm --env-file .env.production.local devtrack:migrations node node_modules/prisma/build/index.js migrate deploy
+docker build --target migrations --build-arg APP_VERSION=<FULL_COMMIT_SHA> --tag devtrack-migrations:local .
+docker run --rm --env-file .env.production.local devtrack-migrations:local
 ```
 
-This is a documented operation, not an automatic deploy/seed step. The current
-task executed migrations only against disposable test databases. Harness,
-registry publishing and cloud deployment remain later phases.
+This is a documented operation, not an application startup/seed step. This phase
+executed migrations only against disposable test databases. Release YAML and a
+Cloud Run manifest are prepared; registry publishing and cloud deployment await
+reviewed main and live verification. The small trial database is ready, and the
+release trigger is disabled.
 
 The build follows the official [Docker Node.js guide](https://docs.docker.com/guides/nodejs/)
 and [npm ci semantics](https://docs.npmjs.com/cli/v11/commands/npm-ci/).

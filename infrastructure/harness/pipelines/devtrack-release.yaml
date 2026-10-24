@@ -1,0 +1,246 @@
+pipeline:
+  name: devtrack-release
+  id: devtrack_release
+  description: Validate reviewed main, publish its immutable image, migrate once, deploy, and smoke test.
+  timeout: 1h
+  repo:
+    connector: github
+    name: devtrack
+  clone:
+    enabled: true
+    ref: <+input>
+  inputs:
+    release_enabled:
+      type: boolean
+      default: false
+      description: Enable only for the approved protected-trial release.
+    gcp_project:
+      type: string
+      default: devtrack-trial-krish-20261024
+      required: true
+      description: The approved Google Cloud project ID.
+    region:
+      type: string
+      default: us-central1
+    artifact_repository:
+      type: string
+      default: devtrack
+    application_origin:
+      type: string
+      default: https://devtrack-656038155261.us-central1.run.app
+      required: true
+      description: Exact HTTPS Cloud Run service origin, without a trailing slash.
+    runtime_service_account:
+      type: string
+      default: devtrack-runtime@devtrack-trial-krish-20261024.iam.gserviceaccount.com
+      required: true
+    cloud_sql_connection:
+      type: string
+      default: devtrack-trial-krish-20261024:us-central1:devtrack-postgres-small
+      required: true
+      description: Cloud SQL project:region:instance name for the authenticated socket.
+    database_secret_version:
+      type: string
+      default: '1'
+  stages:
+    - name: Validate
+      id: Validate
+      runtime: cloud
+      platform:
+        os: linux
+        arch: amd64
+      steps:
+        - name: Verify reviewed release source
+          id: Source
+          run:
+            shell: sh
+            env:
+              RELEASE_ENABLED: ${{ inputs.release_enabled }}
+              GCP_PROJECT: ${{ inputs.gcp_project }}
+            script: |-
+              set -eu
+              [ "$RELEASE_ENABLED" = true ] || { echo 'Cloud release is disabled pending account setup.' >&2; exit 1; }
+              [ "$GCP_PROJECT" = devtrack-trial-krish-20261024 ] || { echo 'This release is restricted to the approved trial project.' >&2; exit 1; }
+              COMMIT_SHA=$(sh infrastructure/harness/scripts/verify-release-source.sh)
+              printf 'COMMIT_SHA=%s\n' "$COMMIT_SHA" >> "$HARNESS_OUTPUT"
+        - name: Install pinned tools and dependencies
+          id: Install
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              sh infrastructure/harness/scripts/setup-node.sh
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm ci
+        - name: Format schema and lint
+          id: Lint
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm run format:check
+              npm run db:validate
+              npm run lint
+        - name: Strict TypeScript
+          id: Typecheck
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm run typecheck
+        - name: Unit and frontend tests
+          id: Unit_tests
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm test
+        - name: PostgreSQL integration and coverage
+          id: Database_tests
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              trap 'docker compose --env-file .env.example --profile test stop db-test' EXIT
+              npm run test:integration
+              npm run test:coverage
+        - name: Production build
+          id: Build
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm run build
+    - name: Package
+      id: Package
+      needs: Validate
+      runtime: cloud
+      platform:
+        os: linux
+        arch: amd64
+      steps:
+        - name: Recheck main before publishing
+          id: Source
+          run:
+            shell: sh
+            script: sh infrastructure/harness/scripts/verify-release-source.sh
+        - name: Publish commit image to Google Artifact Registry
+          id: Publish
+          template:
+            uses: buildAndPushToGAR
+            with:
+              connector: gcp
+              host: ${{ inputs.region }}-docker.pkg.dev
+              project_id: ${{ inputs.gcp_project }}
+              image_name: ${{ inputs.artifact_repository }}/devtrack
+              tags:
+                - ${{ stages.Validate.output.COMMIT_SHA }}
+              caching: true
+              context: .
+              target: runtime
+              build_args:
+                - path1: APP_VERSION
+                  path2: ${{ stages.Validate.output.COMMIT_SHA }}
+        - name: Publish commit migration tools to Google Artifact Registry
+          id: Publish_migrations
+          template:
+            uses: buildAndPushToGAR
+            with:
+              connector: gcp
+              host: ${{ inputs.region }}-docker.pkg.dev
+              project_id: ${{ inputs.gcp_project }}
+              image_name: ${{ inputs.artifact_repository }}/devtrack-migrations
+              tags:
+                - ${{ stages.Validate.output.COMMIT_SHA }}
+              caching: true
+              context: .
+              target: migrations
+              build_args:
+                - path1: APP_VERSION
+                  path2: ${{ stages.Validate.output.COMMIT_SHA }}
+    - name: Deploy Production
+      id: Deploy_Production
+      needs: Package
+      runtime: cloud
+      platform:
+        os: linux
+        arch: amd64
+      service:
+        type: google-cloud-run
+        items:
+          - devtrack
+      environment:
+        items:
+          - id: production
+            deploy-to:
+              - cloud_run
+      steps:
+        - name: Recheck main before deployment
+          id: Source
+          run:
+            shell: sh
+            script: sh infrastructure/harness/scripts/verify-release-source.sh
+        - name: Install smoke tools
+          id: Install
+          run:
+            shell: sh
+            script: |-
+              set -eu
+              sh infrastructure/harness/scripts/setup-node.sh
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm ci
+        - name: Prepare the one-time migration job
+          id: Prepare_migration
+          run:
+            shell: sh
+            env:
+              MIGRATION_IMAGE: ${{ inputs.region }}-docker.pkg.dev/${{ inputs.gcp_project }}/${{ inputs.artifact_repository }}/devtrack-migrations:${{ stages.Validate.output.COMMIT_SHA }}
+              APPLICATION_ORIGIN: ${{ inputs.application_origin }}
+              RUNTIME_SERVICE_ACCOUNT: ${{ inputs.runtime_service_account }}
+              CLOUD_SQL_CONNECTION: ${{ inputs.cloud_sql_connection }}
+              DATABASE_SECRET_VERSION: ${{ inputs.database_secret_version }}
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              node --input-type=module <<'NODE'
+              import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+              const keys = [
+                'MIGRATION_IMAGE', 'APPLICATION_ORIGIN', 'RUNTIME_SERVICE_ACCOUNT',
+                'CLOUD_SQL_CONNECTION', 'DATABASE_SECRET_VERSION',
+              ];
+              let manifest = readFileSync('infrastructure/cloud-run/migrate.yaml', 'utf8');
+              for (const key of keys) {
+                const value = process.env[key];
+                if (!value) throw new Error('Missing migration job input: ' + key);
+                manifest = manifest.replaceAll('__' + key + '__', JSON.stringify(value));
+              }
+              mkdirSync('.ci', { recursive: true });
+              writeFileSync('.ci/migration-job.yaml', manifest);
+              NODE
+        - name: Migrate production once
+          id: Migrate
+          template:
+            uses: googleCloudRunJobStep
+            with:
+              manifest: .ci/migration-job.yaml
+              execute_cmd_options: --wait
+        - name: Deploy the published artifact
+          id: Deploy
+          template:
+            uses: googleCloudRunDeployStep
+        - name: Verify deployed health and commit
+          id: Smoke
+          run:
+            shell: sh
+            env:
+              APPLICATION_ORIGIN: ${{ inputs.application_origin }}
+              EXPECTED_COMMIT: ${{ stages.Validate.output.COMMIT_SHA }}
+            script: |-
+              set -eu
+              export PATH="$PWD/.ci/node/bin:$PATH"
+              npm run smoke:deployment -- "$APPLICATION_ORIGIN" "$EXPECTED_COMMIT"
