@@ -1,0 +1,43 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: devtrack
+  annotations:
+    run.googleapis.com/ingress: all
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: '0'
+        autoscaling.knative.dev/maxScale: '1'
+    spec:
+      serviceAccountName: ${{ inputs.runtime_service_account }}
+      containerConcurrency: 4
+      timeoutSeconds: 60
+      containers:
+        - image: ${{ artifact.image }}
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: '1'
+              memory: 512Mi
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: APP_ORIGIN
+              value: ${{ inputs.application_origin }}
+            - name: TRUST_PROXY_HOPS
+              value: '1'
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: production_database_url
+                  key: ${{ inputs.database_secret_version }}
+          startupProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8080
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 20
