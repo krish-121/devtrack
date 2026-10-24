@@ -21,6 +21,7 @@ trigger:
           headerConditions: []
   inputYaml: |
     inputs:
+      release_commit: <+trigger.commitSha>
       release_enabled: false
       overlay:
         clone:

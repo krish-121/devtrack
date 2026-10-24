@@ -35,7 +35,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: production_database_url
-                  key: ${{ inputs.database_secret_version }}
+                  key: '${{ inputs.database_secret_version }}'
           startupProbe:
             httpGet:
               path: /api/v1/health
