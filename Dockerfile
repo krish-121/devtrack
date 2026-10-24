@@ -19,6 +19,14 @@ FROM dependencies AS build
 COPY . .
 RUN npm run db:generate && npm run build
 
+FROM build AS migrations
+ARG APP_VERSION=development
+ENV NODE_ENV=production APP_VERSION=$APP_VERSION
+LABEL org.opencontainers.image.source="https://github.com/krish-121/devtrack" \
+    org.opencontainers.image.revision=$APP_VERSION
+USER node
+CMD ["node", "--import", "tsx", "scripts/migrate-production.ts"]
+
 FROM manifests AS production-dependencies
 # Only API/shared workspaces belong in the server runtime. Keep the lockfile;
 # npm ci still verifies every installed package's locked version/integrity.

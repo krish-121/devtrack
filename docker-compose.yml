@@ -46,6 +46,8 @@ services:
       - '127.0.0.1:5434:5432'
     tmpfs:
       - /var/lib/postgresql
+    volumes:
+      - postgres-socket-e2e:/var/run/postgresql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U devtrack -d devtrack_e2e']
       interval: 2s
@@ -54,3 +56,4 @@ services:
 
 volumes:
   postgres-data:
+  postgres-socket-e2e:

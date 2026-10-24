@@ -1,0 +1,33 @@
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: devtrack-migrate
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/cloudsql-instances: __CLOUD_SQL_CONNECTION__
+    spec:
+      taskCount: 1
+      parallelism: 1
+      template:
+        spec:
+          serviceAccountName: __RUNTIME_SERVICE_ACCOUNT__
+          maxRetries: 0
+          timeoutSeconds: '300'
+          containers:
+            - image: __MIGRATION_IMAGE__
+              resources:
+                limits:
+                  cpu: '1'
+                  memory: 512Mi
+              env:
+                - name: NODE_ENV
+                  value: production
+                - name: APP_ORIGIN
+                  value: __APPLICATION_ORIGIN__
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: production_database_url
+                      key: __DATABASE_SECRET_VERSION__
