@@ -1,0 +1,16 @@
+.git
+.agents
+.codex
+**/node_modules
+**/dist
+**/coverage
+apps/api/src/generated
+playwright-report
+test-results
+.ci
+.env*
+.npmrc
+*.log
+*.pem
+*.key
+service-account*.json
