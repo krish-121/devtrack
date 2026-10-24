@@ -13,17 +13,21 @@ Use the project-scoped GitHub connector `github`, restricted to
 token. The repository contains public example test database credentials only.
 No production secrets are needed by this pipeline.
 
-Store the pipeline in Git at the path above. During bootstrap, the definition
-is on `ci/harness-pr-validation`, because `main` still contains only the initial
-specification. After review and merge, use `main` as the trusted definition
-branch for the trigger. PR code is checked out separately using its PR number.
-Do not let an untrusted PR choose a pipeline with broader secrets or deployment
-permissions.
+Git is the source of truth. Apply the exact versioned YAML to the inline Harness
+pipeline, and commit every configuration change alongside its applied copy.
+Harness's Git-storage branch picker exposed only `main` during bootstrap even
+after the CI branch was pushed and verified with GitHub. Inline storage avoids
+writing a pipeline directly to unreviewed `main`. PR code is checked out
+separately using its PR number. Do not let an untrusted PR choose a pipeline
+with broader secrets or deployment permissions.
 
 The webhook listens for pull requests opened, reopened, or synchronized
-(updated), targeting `main`. Configure the Git-backed definition branch
-explicitly when importing the trigger. The trigger's `inputYaml` selects
-`type: PR` and `<+trigger.prNumber>`. Harness reports the result to GitHub.
+(updated), targeting `main`. The trigger's `inputYaml` selects
+`clone.ref.type: pull-request` and `<+trigger.prNumber>`. Harness reports the
+result to GitHub. This account's editor uses Harness v1 YAML: `id`, `repo`,
+`clone`, and stage `steps[].run.script`, rather than the older v0 `identifier`
+and `spec.execution.steps` layout. Organization/project scope is supplied by
+the Harness resource, rather than fields in the v1 pipeline document.
 
 ## What runs
 
@@ -43,7 +47,9 @@ adds that location to `PATH`.
    service, applies migrations, and runs real database/API tests.
 6. `npm run test:coverage` enforces the existing coverage thresholds.
 7. `npm run build` produces the production shared/API/web builds.
-8. The cleanup step stops only `db-test`, including after a previous failure.
+
+Both database steps use an EXIT trap to stop only `db-test` on success or
+failure. The Cloud machine is disposable as well.
 
 The Cloud machine must provide Docker Engine and Docker Compose. The setup step
 checks both so missing infrastructure fails clearly. PostgreSQL is exposed only
@@ -72,4 +78,4 @@ merge. Review and merge remain separate from creating and testing the PR.
 
 - [Harness native Run step settings](https://developer.harness.io/docs/continuous-integration/use-ci/run-step-settings/)
 - [Harness input sets and PR trigger examples](https://developer.harness.io/docs/platform/pipelines/input-sets)
-- [Harness pipeline schema](https://github.com/harness/harness-schema/blob/main/v0/pipeline.json)
+- [Harness v1 pipeline schema](https://github.com/harness/harness-schema/blob/main/v1/pipeline.json)

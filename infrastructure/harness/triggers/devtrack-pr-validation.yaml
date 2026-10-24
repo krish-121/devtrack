@@ -26,11 +26,8 @@ trigger:
             - Synchronize
   inputYaml: |
     pipeline:
-      identifier: devtrack_pr_validation
-      properties:
-        ci:
-          codebase:
-            build:
-              type: PR
-              spec:
-                number: <+trigger.prNumber>
+      id: devtrack_pr_validation
+      clone:
+        ref:
+          type: pull-request
+          number: <+trigger.prNumber>
