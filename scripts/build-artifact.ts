@@ -35,6 +35,19 @@ const revision = runCommand(
   { capture: true },
 ).trim();
 if (revision !== commit) throw new Error('Image revision does not match Git.');
+const imageEnvironment = runCommand(
+  'docker',
+  [
+    'image',
+    'inspect',
+    '--format',
+    '{{range .Config.Env}}{{println .}}{{end}}',
+    image,
+  ],
+  { capture: true },
+).split(/\r?\n/);
+if (!imageEnvironment.includes(`APP_VERSION=${commit}`))
+  throw new Error('Baked APP_VERSION does not match Git.');
 const imageId = runCommand(
   'docker',
   ['image', 'inspect', '--format', '{{.Id}}', image],

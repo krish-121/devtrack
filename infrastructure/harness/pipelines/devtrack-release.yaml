@@ -129,6 +129,9 @@ pipeline:
       platform:
         os: linux
         arch: amd64
+      env:
+        APP_VERSION: ${{ inputs.release_commit }}
+        PLUGIN_BUILD_ARGS_FROM_ENV: APP_VERSION
       steps:
         - name: Recheck main before publishing
           id: Source
@@ -138,7 +141,7 @@ pipeline:
         - name: Publish commit image to Google Artifact Registry
           id: Publish
           template:
-            uses: buildAndPushToGAR
+            uses: buildAndPushToGAR@1.3.2
             with:
               connector: gcp
               host: ${{ inputs.region }}-docker.pkg.dev
@@ -149,13 +152,10 @@ pipeline:
               caching: true
               context: .
               target: runtime
-              build_args:
-                - path1: APP_VERSION
-                  path2: ${{ inputs.release_commit }}
         - name: Publish commit migration tools to Google Artifact Registry
           id: Publish_migrations
           template:
-            uses: buildAndPushToGAR
+            uses: buildAndPushToGAR@1.3.2
             with:
               connector: gcp
               host: ${{ inputs.region }}-docker.pkg.dev
@@ -166,9 +166,6 @@ pipeline:
               caching: true
               context: .
               target: migrations
-              build_args:
-                - path1: APP_VERSION
-                  path2: ${{ inputs.release_commit }}
     - name: Deploy Production
       id: Deploy_Production
       needs: Package

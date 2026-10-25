@@ -20,8 +20,9 @@ COPY . .
 RUN npm run db:generate && npm run build
 
 FROM build AS migrations
-ARG APP_VERSION=development
+ARG APP_VERSION
 ENV NODE_ENV=production APP_VERSION=$APP_VERSION
+RUN node -e "if (!/^[a-f0-9]{40}$/.test(process.env.APP_VERSION || '')) { console.error('APP_VERSION must be a full lowercase Git commit SHA.'); process.exit(1); }"
 LABEL org.opencontainers.image.source="https://github.com/krish-121/devtrack" \
     org.opencontainers.image.revision=$APP_VERSION
 USER node
@@ -37,8 +38,9 @@ RUN npm ci --omit=dev --omit=optional --omit=peer --ignore-scripts --workspace @
     && npm rebuild argon2
 
 FROM base AS runtime
-ARG APP_VERSION=development
+ARG APP_VERSION
 ENV NODE_ENV=production PORT=3000 APP_VERSION=$APP_VERSION
+RUN node -e "if (!/^[a-f0-9]{40}$/.test(process.env.APP_VERSION || '')) { console.error('APP_VERSION must be a full lowercase Git commit SHA.'); process.exit(1); }"
 LABEL org.opencontainers.image.source="https://github.com/krish-121/devtrack" \
     org.opencontainers.image.revision=$APP_VERSION
 COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules

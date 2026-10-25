@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { setTimeout } from 'node:timers/promises';
 import { e2eEnvironment } from '../e2e/environment.js';
 import { runCommand, workspaceRoot } from './run-command.js';
@@ -96,6 +97,25 @@ function startContainer(production: boolean) {
 try {
   run('docker', [...compose, 'up', '-d', '--wait', 'db-e2e']);
   if (dockerMode) {
+    // A publisher must fail before pushing if its build arguments disappear.
+    for (const target of ['runtime', 'migrations']) {
+      const result = spawnSync('docker', ['build', '--target', target, '.'], {
+        cwd: workspaceRoot,
+        env: environment,
+        encoding: 'utf8',
+      });
+      if (result.error) throw result.error;
+      assert.notEqual(
+        result.status,
+        0,
+        `${target} must reject a missing version`,
+      );
+      assert.match(
+        `${result.stdout}\n${result.stderr}`,
+        /APP_VERSION must be a full lowercase Git commit SHA/,
+        'The build must fail at the version guard, not an unrelated error',
+      );
+    }
     run('docker', [
       'build',
       '--target',

@@ -1,13 +1,14 @@
 # Phase 13/14 implementation and remaining cloud work
 
-Checked on 24 October 2026. Phases 1–12 remain implemented and verified.
+Checked on 25 October 2026. Phases 1–12 remain implemented and verified.
 **Phases 13 and 14 are not complete end to end.** The repository implementation
 and local checks are ready for review. The user activated Google's protected Free
 Trial and approved scoped keyless deployment identities. The dedicated project,
 immutable GAR repository and passing Harness GCP connection are set up. Harness
 service `devtrack`, environment `production` and infrastructure `cloud_run` exist.
 The saved release pipeline and service artifact binding use the account's actual
-native template inputs. Registry publishing and deployment remain unresolved.
+native template inputs. Real publishing succeeded, but version metadata and
+native CD authentication need correction before deployment.
 The separate 30-day Cloud SQL offer failed with `ERROR_STOCKOUT`; the user then
 explicitly approved the small credit-funded database. `devtrack-postgres-small`
 is running with a limited app user and Google secret version `1`. No production
@@ -37,9 +38,12 @@ do not shut it down after its first demonstration without the user's agreement.
   and stops deployment on failure. No database credential enters CI Run steps.
 - Verified the actual native Harness UI configuration: the stable GAR template
   uses `host`, `project_id`, `image_name` and `build_args` (`path1`/`path2` pairs),
-  while the job uses `manifest` and `execute_cmd_options`. The documented GAR
+  while the job uses `manifest` and `execute_cmd_options`. Real publishing later
+  showed that the accepted build-argument pairs did not reach Docker; the
+  prepared correction uses the official plugin's environment forwarding and
+  makes both Docker targets reject missing versions. The documented GAR
   `@1.0.0` template did not exist in this account. The final saved pipeline was
-  copied back and matched the prepared YAML; a real release is still required.
+  copied back and matched the prepared YAML; successful corrected CD is still required.
 - Patched transitive `body-parser` 2.3.0 → 2.4.0 and `fast-uri` 3.1.8 → 3.1.9;
   the body-parser update also resolves `qs` to 6.16.1. Fresh installs report zero
   known npm vulnerabilities. See the
@@ -160,20 +164,62 @@ unsupported optional CLI label flag, PostgreSQL's required parameter type in
 database ownership. None was worked around by granting the app administrative
 roles or opening database IP access.
 
+## Live release evidence
+
+The owner reviewed and authorized PRs #1–4, and all four were merged through
+normal protected checks. Reviewed main is now
+`c2cd9b4fd3c90af0b486e8fea7d4a6cc5b77614e`.
+
+[Release #3](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/orgs/default/projects/DevTrack/pipelines/devtrack_release/executions/LGHF64wQRqCbtIuPaV4usQ/pipeline)
+passed the explicit source comparison, all Validate checks and both native GAR
+publish steps. Both tags are the full reviewed SHA in
+`us-central1-docker.pkg.dev/devtrack-trial-krish-20261024/devtrack`:
+
+| Package               | Published digest                                                          |
+| --------------------- | ------------------------------------------------------------------------- |
+| `devtrack`            | `sha256:4248230dfb33de8afbe51f63f9197bad08d93b5f02792f3bc75d1053338cb2f4` |
+| `devtrack-migrations` | `sha256:cf387a6a990158db5c558a9a0f4e976954f0e218b205d5383615b3b0ab412f22` |
+
+Pulling the app by its registry digest confirmed a correct OCI revision label
+but an incorrect `APP_VERSION=development`. Harness's automatic label is not
+proof that the build argument reached Docker. These tags are audit evidence,
+not approved deployable releases. Do not overwrite them; a corrected reviewed
+commit must produce new immutable tags.
+
+Native CD then failed at service artifact initialization using
+`harnessdev/gar-artifact-metadata:0.0.1`: Google's exchange returned
+`invalid_grant: Unable to parse the ID Token`. Source and artifact input values
+resolved correctly. CI's successful OIDC publish does not prove the separate CD
+plugin supports the same authentication path. No production migration or Cloud
+Run service was created. The small database remains `RUNNABLE`.
+
+The owner approved a separate credential-based CD connector for the same
+limited release identity; CI remains keyless. Its exact boundary and remaining
+verification are recorded in [the identity plan](DEPLOYMENT_IDENTITY_PLAN.md).
+No billing upgrade or additional IAM role was made.
+
+The image guard regression checks passed for both Docker targets. The full
+Docker suite passed both Chromium workflows, fresh/idempotent migrations and
+production smoke, including version matching, non-root execution and HTTPS
+policy. Formatting, lint, strict types, unit/frontend tests and build passed.
+The first local unit attempt hit sandbox temporary-file `ENOENT` errors; rerun
+outside that sandbox passed. Docker Desktop was initially stopped and was
+started before the successful container run.
+
 ## What remains
 
 Read [DEPLOYMENT.md](DEPLOYMENT.md) for the concrete resource/input map and trial
-lifecycle. Live completion still needs owner review/merge of the concrete PRs,
-latest-commit Harness validation, GAR push, production migration and Cloud Run
-execution. The configured artifact binding and native templates still require
-real runtime verification. Existing cloud/Harness definitions do not prove runs.
+lifecycle. Live completion still needs review/merge and Harness validation of
+the image-guard fix, proof of a correctly baked published version, the approved
+CD credential upload/connection test, production migration and Cloud Run
+execution. Existing cloud/Harness definitions do not prove a successful release.
 Record the commit, registry digest, Harness run, Cloud Run revision/time and
 external HTTPS smoke result. No successful cloud release evidence exists yet.
 
-The bootstrap PR is still awaiting user review/merge. A release must use reviewed
-main, not publish unmerged application code just to make a pipeline turn green.
-The main-push trigger stays disabled until the cost constraint and account-side
-validation are resolved.
+A release must use reviewed main. The main-push trigger stays disabled until
+manual release, public HTTPS smoke and hosted workflows pass. Then create/enable
+the real trigger and verify a main update runs the same release path. Keep the
+app available during the protected trial; do not upgrade to paid billing.
 
 ## Concepts to understand
 

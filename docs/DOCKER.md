@@ -7,17 +7,18 @@ Development still uses host Vite/Express watchers and Compose PostgreSQL.
 ## Build and verify locally
 
 ```sh
-docker build --tag devtrack:local .
+docker build --build-arg APP_VERSION=<FULL_COMMIT_SHA> --tag devtrack:local .
 npm run test:docker
 ```
 
 For a traceable committed artifact, use `npm run artifact:build` from a clean
 working tree. It tags the image with full HEAD, passes `APP_VERSION` to the build,
-checks the OCI revision label and writes an ignored local receipt. It never
+checks both the OCI revision label and the baked version, and writes an ignored local receipt. It never
 pushes an image. See [DEPLOYMENT.md](DEPLOYMENT.md) for GAR/Harness setup and
 the current no-cost hosting constraint.
 
-The second command builds the image, starts a disposable E2E PostgreSQL service,
+Both final Docker targets reject a missing or malformed commit version before
+an image can be published. The second command checks that rejection, builds the image, starts a disposable E2E PostgreSQL service,
 applies migrations, runs both Chromium workflows against the container, verifies
 default production-mode behavior, and cleans up its containers/test data. It
 requires local npm dependencies and `npx playwright install chromium`. See

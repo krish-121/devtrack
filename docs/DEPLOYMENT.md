@@ -8,22 +8,30 @@ GCP connector passes its connection test, and its service/environment/target
 definitions exist. The initial separate free Cloud SQL instance failed to
 provision. The user then explicitly approved a small database using promotional
 credit. It is running, with a verified limited app user and managed secret. The
-release pipeline is saved but has not run; its trigger is disabled and
+release pipeline has run three times; the latest passed Validate and Package,
+then failed at CD artifact initialization before any production migration.
+Its trigger is disabled and
 `release_enabled` defaults to false until reviewed main and live checks are ready.
 
-## Verified setup on 24 October 2026
+## Verified setup on 25 October 2026
 
 - Project: `devtrack-trial-krish-20261024`, number `656038155261`.
 - Trial: console shows promotional credit and expiry on 23 January 2027;
   the account remains an unupgraded Free Trial.
-- Registry: `us-central1/devtrack`, Docker format, immutable tags, no image yet.
+- Registry: `us-central1/devtrack`, Docker format, immutable tags. The first app
+  and migration images were published from reviewed main; their version check
+  failed. Do not deploy or overwrite those immutable tags. See
+  [the release evidence](PHASE_13_14.md#live-release-evidence).
 - Identity: [approved roles and trust boundary](DEPLOYMENT_IDENTITY_PLAN.md).
-  No user-managed service-account private keys were created.
+  CI remains keyless. The owner separately approved one limited CD credential
+  after the native artifact plugin failed to exchange its OIDC token. Credential
+  upload and real CD verification remain pending; no roles were added.
 - Harness: project-scoped `gcp` connector connection test succeeds. Service
   `devtrack` fetches the versioned manifest by the release commit expression.
   Environment `production` and infrastructure `cloud_run` exist; the target uses
   `${{ inputs.gcp_project }}`, region `us-central1`, connector `gcp`, service scope
-  `devtrack` and simultaneous deployments `false`. Runtime execution is unverified.
+  `devtrack` and simultaneous deployments `false`. CD runtime execution failed
+  before any deployment; its limited credential fallback remains to be tested.
 - Pipeline `devtrack_release` is saved with Validate, Package and Deploy Production.
   Its primary GAR artifact `devtrack_image` selects package `devtrack` and the
   full commit from `inputs.release_commit`. The saved pipeline YAML
@@ -149,14 +157,23 @@ never `latest` or a moving branch. Harness injects the resolved image into the
 Cloud Run manifest. Verify these service bindings in the real account before
 enabling the trigger; the pipeline alone cannot create them.
 
-The account's native stable `buildAndPushToGAR` template uses BuildX/caching for
-OIDC. The documented `@1.0.0` version did not exist in this account. Inspecting
-the native editor established the actual inputs: `host`, `project_id`,
-`image_name`, `build_args` with `path1`/`path2` entries, `context`, `target`, `tags`
-and `caching`. The repository uses that saved form. The pipeline publishes the
+The account's native `buildAndPushToGAR@1.3.2` template uses BuildX/caching for
+OIDC. The documented `@1.0.0` version did not exist in this account. The native
+editor accepted `build_args` with `path1`/`path2` pairs, but real execution
+silently omitted the Docker build argument: the published image's label named
+the correct commit while its baked `APP_VERSION` remained `development`.
+
+The prepared fix pins the observed stable template version and forwards the
+public `APP_VERSION` through Package's environment with
+`PLUGIN_BUILD_ARGS_FROM_ENV=APP_VERSION`, supported by the
+[official BuildX argument parser](https://github.com/drone-plugins/drone-buildx/blob/master/app.go).
+Both Docker targets reject an absent or malformed SHA, so failed forwarding
+stops the build before publication. This path still requires a real Harness
+execution; local Docker success alone does not prove the template wiring.
+The pipeline publishes the
 `runtime` target as `devtrack:<SHA>` and the separate `migrations` target as
 `devtrack-migrations:<SHA>`. Both bake the same `APP_VERSION`. A real execution
-must still prove publishing, metadata and artifact resolution; schema validity
+must still prove corrected version metadata and artifact resolution; schema validity
 alone does not prove it. The local Docker suite verifies both targets.
 
 Use the approved project's number and region to configure the default origin

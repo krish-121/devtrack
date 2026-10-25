@@ -5,9 +5,11 @@ currently implements **Phases 1–12**: repository tooling, PostgreSQL/Prisma,
 cookie-based authentication, projects, tasks, a real dashboard, and application
 feedback/accessibility polish, testing hardening, a production Docker image,
 and a GitHub PR workflow with verified Harness CI.
-Phase 13/14 release code is prepared and protected-trial cloud setup is underway;
-the small PostgreSQL database and secret are ready. Registry publishing and live
-Cloud Run deployment remain pending. These phases are not complete end to end.
+Phase 13/14 release code and protected-trial cloud resources are set up.
+Harness has published both full-SHA image tags; verification caught a missing
+baked version and a CD authentication error before migration or deployment.
+Those fixes and live Cloud Run verification remain pending. These phases are
+not complete end to end.
 The UI supports task status, priority, optional
 due dates, server-side search/filtering, and real project progress.
 
