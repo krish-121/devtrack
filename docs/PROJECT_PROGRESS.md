@@ -1,30 +1,30 @@
 # DevTrack phase progress
 
 Engineering source of truth: [PROJECT_SPEC.md](PROJECT_SPEC.md), section 134.
-Status checked on 24 October 2026 against the working tree and prior project
+Status checked on 25 October 2026 against the working tree and prior project
 instructions. Phases 1–10 were implemented locally before being imported as
 focused bootstrap commits in the Phase 11 pull request.
 
 ## Phase status
 
-| Phase                      | Status                                    | Evidence                                                                                                                |
-| -------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 1 — Repository Foundation  | Implemented and verified                  | npm workspaces, React/Vite, Express health endpoint, strict TypeScript, ESLint, Prettier, root commands                 |
-| 2 — Database Foundation    | Implemented and verified                  | PostgreSQL Compose services, User/Project/Task schema, migration, seed, database constraints and integration tests      |
-| 3 — Backend Project Slice  | Implemented and verified                  | Five project endpoints, validation, thin controllers, services, owner-scoped repositories, real database tests          |
-| 4 — Frontend Project Slice | Implemented and verified                  | Project list/detail/create/edit/delete UI, one HTTP client, React Router, TanStack Query, frontend behavior tests       |
-| 5 — Authentication         | Implemented and verified                  | Register/login/logout/me, Argon2id, expiring database sessions, protected routes, authenticated ownership tests         |
-| 6 — Tasks                  | Implemented and verified                  | Owner-scoped task CRUD/API/UI, status, priority, due dates, server search/filtering, tests                              |
-| 7 — Dashboard              | Implemented and verified                  | Authenticated summary endpoint, real owner-scoped counts, recent project progress, mutation refresh, tests              |
-| 8 — Error/Loading/Polish   | Implemented and verified                  | Shared feedback states, actionable empty states, safe confirmation/form focus, responsive navigation and layout         |
-| 9 — Testing Hardening      | Implemented and verified                  | Service tests, real database/API tests, frontend coverage gates, two isolated Chromium workflows                        |
-| 10 — Docker                | Implemented and verified                  | Multi-stage production image; same-origin SPA/API, non-root runtime, health/shutdown and real container workflow checks |
-| 11 — GitHub Workflow       | Implemented and verified                  | Focused commits, CI branch, PR template, open PR #1, enforced main-branch protection                                    |
-| 12 — Harness PR Pipeline   | Implemented and verified                  | Real GitHub PR webhook, Harness Cloud checks, deliberate TS2322 failure followed by successful fixed-commit execution   |
-| 13 — Artifact Pipeline     | Local implementation; cloud proof pending | SHA image build, OCI metadata, immutable GAR repository and passing GCP connector test; no GAR push yet                 |
-| 14 — Harness CD            | Cloud setup underway; deployment pending  | Harness release/service/environment/artifact configured; small PostgreSQL and secret ready; no cloud app deployment yet |
-| 15 — Documentation         | Not completed as a full-project phase     | Current implementation is documented; final architecture/delivery walkthroughs come later                               |
-| 16 — Learning Pass         | Developer work remains                    | Understanding cannot be certified by generated code or passing tests                                                    |
+| Phase                      | Status                                 | Evidence                                                                                                                  |
+| -------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1 — Repository Foundation  | Implemented and verified               | npm workspaces, React/Vite, Express health endpoint, strict TypeScript, ESLint, Prettier, root commands                   |
+| 2 — Database Foundation    | Implemented and verified               | PostgreSQL Compose services, User/Project/Task schema, migration, seed, database constraints and integration tests        |
+| 3 — Backend Project Slice  | Implemented and verified               | Five project endpoints, validation, thin controllers, services, owner-scoped repositories, real database tests            |
+| 4 — Frontend Project Slice | Implemented and verified               | Project list/detail/create/edit/delete UI, one HTTP client, React Router, TanStack Query, frontend behavior tests         |
+| 5 — Authentication         | Implemented and verified               | Register/login/logout/me, Argon2id, expiring database sessions, protected routes, authenticated ownership tests           |
+| 6 — Tasks                  | Implemented and verified               | Owner-scoped task CRUD/API/UI, status, priority, due dates, server search/filtering, tests                                |
+| 7 — Dashboard              | Implemented and verified               | Authenticated summary endpoint, real owner-scoped counts, recent project progress, mutation refresh, tests                |
+| 8 — Error/Loading/Polish   | Implemented and verified               | Shared feedback states, actionable empty states, safe confirmation/form focus, responsive navigation and layout           |
+| 9 — Testing Hardening      | Implemented and verified               | Service tests, real database/API tests, frontend coverage gates, two isolated Chromium workflows                          |
+| 10 — Docker                | Implemented and verified               | Multi-stage production image; same-origin SPA/API, non-root runtime, health/shutdown and real container workflow checks   |
+| 11 — GitHub Workflow       | Implemented and verified               | Focused commits, CI branch, PR template, open PR #1, enforced main-branch protection                                      |
+| 12 — Harness PR Pipeline   | Implemented and verified               | Real GitHub PR webhook, Harness Cloud checks, deliberate TS2322 failure followed by successful fixed-commit execution     |
+| 13 — Artifact Pipeline     | Published; version correction pending  | Real Harness run published both SHA tags; baked-version verification caught a dropped build argument before deployment    |
+| 14 — Harness CD            | Authentication fix; deployment pending | Native CD artifact token exchange failed before migration; limited credential fallback approved; database remains running |
+| 15 — Documentation         | Not completed as a full-project phase  | Current implementation is documented; final architecture/delivery walkthroughs come later                                 |
+| 16 — Learning Pass         | Developer work remains                 | Understanding cannot be certified by generated code or passing tests                                                      |
 
 Phases 1–12 are now implemented. See [PHASE_11_12.md](PHASE_11_12.md) for the
 GitHub/Harness report and execution links, [PHASE_09_10.md](PHASE_09_10.md) for the
