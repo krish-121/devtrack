@@ -151,7 +151,10 @@ has an expiry; this deployment is not permanent free hosting.
 - `/api/v1/health` proves Express liveness, not database readiness.
   `/api/v1/version` proves the running image's baked commit, not feature correctness.
 - Errors have stable public codes; unexpected errors are logged safely through
-  Pino. No credential values belong in logs or committed examples.
+  Pino. API responses return a generated `X-Request-ID`; Node's AsyncLocalStorage
+  carries it into asynchronous logs without adding logging arguments to business
+  functions. Completion logs include path, method, status and duration, never
+  query strings, cookies or payloads. No credentials belong in logs or examples.
 - Graceful shutdown stops accepting traffic and disconnects Prisma with a bounded
   deadline. PostgreSQL state survives an app container restart.
 - No teams, roles, password reset, email verification, attachments, notifications,

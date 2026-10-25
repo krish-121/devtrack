@@ -4,6 +4,11 @@ Base path: `/api/v1`. Successful JSON responses use `{ "data": ... }`.
 Failures use `{ "error": { "code": "...", "message": "..." } }`.
 Validation failures also include `error.details`, a field-to-message object.
 
+Every API response includes a server-generated `X-Request-ID` UUID. Use it to
+match a response to structured API logs. Async application/error logs inherit
+the same ID; completion logs include method, path, status and duration, omitting
+query strings, cookies, headers and bodies. Client-provided IDs are not trusted.
+
 ## Health and build metadata
 
 Public `GET /health` returns `{ "data": { "status": "ok" } }`. It checks process
