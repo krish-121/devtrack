@@ -92,6 +92,22 @@ not an authentication workaround.
 the account's reader supports the resulting OCI format. See
 [Docker's variable reference](https://docs.docker.com/build/building/variables/#buildx_no_default_attestations).
 
+### Native deployment workspace
+
+**Problem:** Native CD fetched/rendered manifests into root `cloud_run/` before
+the source recheck, making an otherwise clean checkout appear dirty. The first
+guard stopped safely; a path-only diagnostic then identified the generated folder.
+
+**Alternatives:** Remove the clean-source guard, delete generated deployment
+files, or exclude the exact generated directory from source/build input.
+
+**Decision:** Ignore root `/cloud_run/` in Git and `cloud_run` in Docker context.
+Maintained manifests remain under `infrastructure/cloud-run/` and stay tracked.
+
+**Tradeoff:** Nothing maintained may be stored in that root folder. Current-main
+and tracked-file integrity checks remain mandatory; generated output does not
+become application source.
+
 ## Development process change
 
 On 25 October 2026 the owner explicitly replaced the spec's manual owner-inspection

@@ -5,6 +5,8 @@ coverage/
 playwright-report/
 test-results/
 .ci/
+# Native Harness CD renders fetched Cloud Run manifests into this root folder.
+/cloud_run/
 *.tsbuildinfo
 *.log
 .env
