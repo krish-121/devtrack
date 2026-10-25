@@ -255,6 +255,13 @@ main. A newer merge makes an older in-flight release fail its next guard; it
 does not silently substitute newer source. Queue production executions so two
 migrations cannot race. Ordinary PR validation has no publishing/deployment step.
 
+Real native CD execution creates a root `cloud_run/` folder while fetching and
+rendering the service manifest, before user-defined Run steps execute. Release
+`ffec08ee46bb26ba4c99490fedb794b5d6bc4b71` proved this with the path-only diagnostic
+`?? cloud_run/`. That generated folder is excluded from Git and Docker build
+input. This does not ignore `infrastructure/cloud-run/`, relax tracked-source
+checks or change the selected release commit. Do not put maintained source there.
+
 `migrate-production.ts` requires an explicitly supplied production environment,
 HTTPS origin, database URL and full SHA before invoking `prisma migrate deploy`.
 Prisma configuration skips local `.env` loading in production. The application

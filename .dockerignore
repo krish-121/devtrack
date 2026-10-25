@@ -8,6 +8,7 @@ apps/api/src/generated
 playwright-report
 test-results
 .ci
+cloud_run
 .env*
 .npmrc
 *.log
