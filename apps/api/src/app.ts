@@ -11,6 +11,7 @@ import { taskRouter } from './modules/tasks/task.routes.js';
 import { dashboardRouter } from './modules/dashboard/dashboard.routes.js';
 import { extname, join, sep } from 'node:path';
 import { env } from './config/env.js';
+import { requestLogging } from './middleware/request-logging.js';
 
 // Tests import the API alone; the compiled server also supplies its web assets.
 export function createApp(webDirectory?: string) {
@@ -19,6 +20,7 @@ export function createApp(webDirectory?: string) {
   app.disable('x-powered-by');
   // Trust a bounded proxy chain only when the deployment explicitly enables it.
   app.set('trust proxy', env.trustProxyHops);
+  app.use('/api', requestLogging);
   app.use(helmet());
   app.use(express.json({ limit: '16kb' }));
   app.use('/api/v1/health', healthRouter);

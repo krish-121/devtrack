@@ -7,6 +7,7 @@ describe('API foundation', () => {
   it('reports liveness without requiring a database', async () => {
     await request(app)
       .get('/api/v1/health')
+      .expect('X-Request-ID', /^[a-f0-9-]{36}$/)
       .expect('Content-Type', /json/)
       .expect(200, { data: { status: 'ok' } });
   });
@@ -22,6 +23,7 @@ describe('API foundation', () => {
   it('returns the standard JSON error for unknown routes', async () => {
     await request(app)
       .get('/api/v1/missing')
+      .expect('X-Request-ID', /^[a-f0-9-]{36}$/)
       .expect('Content-Type', /json/)
       .expect(404, {
         error: { code: 'NOT_FOUND', message: 'Route not found.' },
