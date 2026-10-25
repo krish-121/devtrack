@@ -3,6 +3,8 @@ set -eu
 
 if [ -n "$(git status --porcelain)" ]; then
   echo 'Release requires a clean checkout.' >&2
+  # Paths/status only: never print file contents, environment values or secrets.
+  git status --short >&2
   exit 1
 fi
 
