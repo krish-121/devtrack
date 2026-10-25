@@ -176,6 +176,23 @@ The pipeline publishes the
 must still prove corrected version metadata and artifact resolution; schema validity
 alone does not prove it. The local Docker suite verifies both targets.
 
+The next real release (`30f5d3783ffd60c180e990f63dc205b9fd538928`)
+published both targets with the correct baked version, verified after pulling
+each by registry digest. Native CD authentication also succeeded with `gcp_cd`,
+but its GAR reader returned 404 for the OCI image index. A direct registry probe
+reproduced 404 with a Docker-v2-only Accept header and 200 when OCI index types
+were accepted. No production migration ran.
+
+Package therefore sets `BUILDX_NO_DEFAULT_ATTESTATIONS=1` for compatibility
+with that reader. For the existing single-platform Linux/amd64 release this
+avoids the default attestation-bearing OCI index. Optional attached provenance
+is not published by this V1 compatibility path; immutable SHA tags, baked
+versions and registry digest verification remain required. This is an image
+format workaround, not an authentication or IAM change. Restore the optional
+attestations when an account-supported artifact reader has been verified to
+accept them. See [Docker's setting](https://docs.docker.com/build/building/variables/#buildx_no_default_attestations)
+and [image exporter media types](https://docs.docker.com/build/exporters/image-registry/).
+
 Use the approved project's number and region to configure the default origin
 `https://devtrack-PROJECT_NUMBER.REGION.run.app`; verify it against Cloud Run's
 actual URL. Google documents this [deterministic HTTPS format](https://docs.cloud.google.com/run/docs/triggering/https-request).

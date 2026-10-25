@@ -132,6 +132,7 @@ pipeline:
       env:
         APP_VERSION: ${{ inputs.release_commit }}
         PLUGIN_BUILD_ARGS_FROM_ENV: APP_VERSION
+        BUILDX_NO_DEFAULT_ATTESTATIONS: '1'
       steps:
         - name: Recheck main before publishing
           id: Source
