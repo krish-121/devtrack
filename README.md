@@ -26,6 +26,15 @@ and the [Phase 5/6 report](docs/PHASE_05_06.md) for authentication and tasks.
 
 [PROJECT_SPEC.md](docs/PROJECT_SPEC.md) is the engineering source of truth.
 
+To learn the completed implementation, start with
+[architecture and diagrams](docs/ARCHITECTURE.md),
+[design decisions and tradeoffs](docs/DESIGN_DECISIONS.md), and the
+[real code walkthrough](docs/WALKTHROUGH.md). The
+[16-day study guide](docs/STUDY_GUIDE.md),
+[personal learning log](docs/LEARNING_LOG.md), and
+[interview demonstration guide](docs/DEMO_GUIDE.md) are prepared for the owner's
+later independent learning pass; they do not certify understanding.
+
 ## Local setup
 
 Use **Node.js 24.18.0** (pinned in `.nvmrc`), **npm 11.16.0**, and Docker Desktop
