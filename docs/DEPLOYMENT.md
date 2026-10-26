@@ -3,9 +3,9 @@
 This is the setup, operation and trial-lifecycle guide. The user authorized the
 small database and deployment using protected Google Free Trial credit, with no
 paid upgrade or cash charges. The first complete Harness release passed production
-migration, native deployment and external HTTPS checks. The main-push trigger is
-now enabled after that manual proof; its first automatic execution will verify
-the webhook. [PHASE_13_14.md](PHASE_13_14.md) records exact evidence.
+migration, native deployment and external HTTPS checks. The enabled main-push
+trigger also completed its first automatic release after a protected PR merge.
+[PHASE_13_14.md](PHASE_13_14.md) records exact manual and webhook evidence.
 `release_enabled` still defaults to false for manual runs.
 
 ## Verified setup (updated 26 October 2026)

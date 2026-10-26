@@ -3,9 +3,9 @@
 Updated 26 October 2026. The explanatory guides are implemented against the
 actual repository. The first full Harness CD release passed; its commit, image
 digests, migration, revision and external checks are recorded in
-[PHASE_13_14.md](PHASE_13_14.md). The enabled main-push trigger's first automatic
-execution is the final automation follow-up. Documents alone do not certify a
-working deployment or independent understanding.
+[PHASE_13_14.md](PHASE_13_14.md). The enabled main-push trigger also completed a
+real automatic release from PR #13's protected merge. Documents alone do not
+certify independent understanding; Phase 16 remains the owner's work.
 
 ## Reading order
 
@@ -94,10 +94,21 @@ checked. Public HTTPS, HSTS, request IDs and unauthenticated 401 behavior were
 also verified. Native-template schema checks and an offline exact-vendor-plugin
 probe complement this real execution; neither replaces it.
 
+The first automatic main-push release repeated the full quality gate, migration,
+native deployment and external smoke successfully. Its commit/digests/revision
+are recorded separately from the first manual release. The production database
+remains RUNNABLE. Public unauthenticated API access remains blocked, and safe
+structured request-log fields were verified in Cloud Logging.
+
 The final evidence update modifies README, deployment/design/progress/phase
 guides and the existing release trigger. It adds no application feature, schema,
 dependency or test. The significant fixes were native project inputs and
 manifest-only job mode; tests for application behavior remain unchanged.
+
+The production demonstration account has not been created: automatic approval
+review requires explicit approval for that persistent account/sample-data change.
+Its normal-UI preparation instructions are available in DEMO_GUIDE. This is
+separate from the verified deployment and from the owner's deferred learning.
 
 Suggested documentation commit: `docs: explain delivery evidence and project operation`.
 
