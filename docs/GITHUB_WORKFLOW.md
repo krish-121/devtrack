@@ -1,13 +1,14 @@
 # GitHub workflow
 
-Use a short-lived `feature/...`, `fix/...`, or `ci/...` branch. Keep `main`
+Use a short-lived `codex/...` branch for agent work (or a descriptive branch for
+your own practice). Keep `main`
 ready to release. A pull request validates changes; merging and deployment are
 separate decisions.
 
 ```sh
 git switch main
 git pull --ff-only
-git switch -c feature/describe-the-change
+git switch -c codex/describe-the-change
 npm run format:check
 npm run lint
 npm run typecheck
@@ -17,7 +18,7 @@ npm run build
 git add <reviewed-files>
 git diff --cached
 git commit -m "feat: describe the resulting behavior"
-git push -u origin feature/describe-the-change
+git push -u origin codex/describe-the-change
 ```
 
 Open a pull request into `main` using `.github/pull_request_template.md`.
@@ -41,8 +42,10 @@ should contain only the current change.
 `devtrack_pr_validation-Validate`. These rules also apply to administrators.
 Force pushes and branch deletion are disabled, and conversations must be
 resolved. A required approval count of zero supports this solo learning repo;
-the owner must still review the PR before choosing to merge it. Do not bypass
-failed checks or merge the bootstrap PR merely to finish this exercise.
+the owner explicitly authorized the agent to review and automatically merge
+project PRs after required checks pass on 25 October 2026. This overrides the
+original manual owner-inspection gate, not GitHub protection. Do not bypass
+failed checks. See [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md).
 
 The bootstrap PR is [#1](https://github.com/krish-121/devtrack/pull/1). See the
 [Phase 11/12 report](PHASE_11_12.md) for the real failing and passing CI runs.
