@@ -1,17 +1,16 @@
 # DevTrack
 
-A learning-focused project and task management application. This repository
-currently implements **Phases 1–12**: repository tooling, PostgreSQL/Prisma,
-cookie-based authentication, projects, tasks, a real dashboard, and application
-feedback/accessibility polish, testing hardening, a production Docker image,
-and a GitHub PR workflow with verified Harness CI.
-Phase 13/14 release code and protected-trial cloud resources are set up.
-Harness has published both full-SHA image tags; verification caught a missing
-baked version and a CD authentication error before migration or deployment.
-Those fixes and live Cloud Run verification remain pending. These phases are
-not complete end to end.
-The UI supports task status, priority, optional
-due dates, server-side search/filtering, and real project progress.
+A learning-focused full-stack project and task management application built with
+React, TypeScript, Express, PostgreSQL and Prisma. It includes cookie-session
+authentication, owner-scoped projects/tasks, a real dashboard, responsive feedback
+states and automated tests. Tasks support status, priority, due dates, search and
+filters; project progress is derived from stored tasks.
+
+Harness validates GitHub PRs, and its release pipeline builds immutable Docker
+images in Google Artifact Registry for migration and deployment to Cloud Run.
+Artifact publication and exact baked versions have been verified. Final live
+deployment verification is in progress; see the
+[current release evidence](docs/PHASE_13_14.md) for the exact verified state.
 
 See the [Phase 13/14 status](docs/PHASE_13_14.md),
 [deployment setup and trial lifecycle](docs/DEPLOYMENT.md),
@@ -34,6 +33,7 @@ To learn the completed implementation, start with
 [personal learning log](docs/LEARNING_LOG.md), and
 [interview demonstration guide](docs/DEMO_GUIDE.md) are prepared for the owner's
 later independent learning pass; they do not certify understanding.
+The [documentation report](docs/PHASE_15.md) maps the guides and final audit.
 
 ## Local setup
 

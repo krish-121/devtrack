@@ -1,19 +1,14 @@
 # Artifact and Cloud Run deployment
 
-This is the Phase 13/14 setup guide, not a record of a successful cloud release.
-The user requires no charges and explicitly approved deployment using Google's
-protected Free Trial without a paid upgrade. The trial, dedicated project,
-immutable registry and approved scoped identities are set up. Harness's keyless
-GCP connector passes its connection test, and its service/environment/target
-definitions exist. The initial separate free Cloud SQL instance failed to
-provision. The user then explicitly approved a small database using promotional
-credit. It is running, with a verified limited app user and managed secret. The
-release pipeline has run three times; the latest passed Validate and Package,
-then failed at CD artifact initialization before any production migration.
-Its trigger is disabled and
-`release_enabled` defaults to false until reviewed main and live checks are ready.
+This is the setup, operation and trial-lifecycle guide. The user authorized the
+small database and deployment using protected Google Free Trial credit, with no
+paid upgrade or cash charges. Artifact publishing, baked versions, native CD
+authentication and artifact/manifest resolution are verified. The final live
+release is pending; [PHASE_13_14.md](PHASE_13_14.md) records exact executions and
+current evidence. The main-push trigger remains disabled until manual release
+and external checks pass. `release_enabled` defaults to false for manual runs.
 
-## Verified setup on 25 October 2026
+## Verified setup (updated 26 October 2026)
 
 - Project: `devtrack-trial-krish-20261024`, number `656038155261`.
 - Trial: console shows promotional credit and expiry on 23 January 2027;
@@ -24,14 +19,15 @@ Its trigger is disabled and
   [the release evidence](PHASE_13_14.md#live-release-evidence).
 - Identity: [approved roles and trust boundary](DEPLOYMENT_IDENTITY_PLAN.md).
   CI remains keyless. The owner separately approved one limited CD credential
-  after the native artifact plugin failed to exchange its OIDC token. Credential
-  upload and real CD verification remain pending; no roles were added.
+  after the native artifact plugin failed to exchange its OIDC token. Connector
+  `gcp_cd` is saved and tested; real native CD artifact resolution succeeds.
+  No additional roles were added.
 - Harness: project-scoped `gcp` connector connection test succeeds. Service
   `devtrack` fetches the versioned manifest by the release commit expression.
   Environment `production` and infrastructure `cloud_run` exist; the target uses
-  `${{ inputs.gcp_project }}`, region `us-central1`, connector `gcp`, service scope
-  `devtrack` and simultaneous deployments `false`. CD runtime execution failed
-  before any deployment; its limited credential fallback remains to be tested.
+  `${{ inputs.gcp_project }}`, region `us-central1`, connector `gcp_cd`, service scope
+  `devtrack` and simultaneous deployments `false`. The service's GAR artifact also
+  uses `gcp_cd`; CI publishing retains the keyless `gcp` connector.
 - Pipeline `devtrack_release` is saved with Validate, Package and Deploy Production.
   Its primary GAR artifact `devtrack_image` selects package `devtrack` and the
   full commit from `inputs.release_commit`. The saved pipeline YAML
@@ -53,13 +49,21 @@ Its trigger is disabled and
 - Secret `production_database_url`, version `1`, is enabled in Google Secret
   Manager with only the approved runtime identity granted secret access. Neither
   its value nor the database password is stored in Git or a Harness Run step.
-- No GAR image push, production migration, Cloud Run service/job or public demo
-  exists yet. Local Unix-socket migration/app verification passes.
+- GAR images are published and verified; see the report for digests. No production
+  migration, Cloud Run service/job or public demo existed at the last check.
+  Local Unix-socket migration/app verification passes.
 
 The user wants the demo available for internship interviews. Do not shut it down
 after the first demonstration without their agreement. Trial expiry is still a
 hard limit under the no-paid-upgrade requirement. Preserve deployment evidence
 and export database data before expiry; a recording can support later interviews.
+
+On 26 October the refreshed console showed 88 days and ₹28,746.85 credit
+remaining, with the Upgrade action still present. This is a point-in-time
+observation, not a fixed spending cap or a promise of future availability. Keep
+the account unupgraded. The console also displayed an account notice requiring
+two-step verification by 1 November 2026; the owner should enable it personally
+to retain console access. No account security setting was changed by the agent.
 
 ## What Google Cloud supplies
 
@@ -114,7 +118,7 @@ still only builds locally. Harness performs publishing during a release.
 Git is authoritative for `infrastructure/harness/pipelines/devtrack-release.yaml`,
 `infrastructure/harness/triggers/devtrack-release.yaml` and
 `infrastructure/cloud-run/devtrack.yaml` and `migrate.yaml`. The release pipeline
-is installed but has not executed yet. It uses the account's v1 pipeline dialect, while the
+is installed and has executed six times. It uses the account's v1 pipeline dialect, while the
 webhook uses the supported trigger wrapper. Official JSON-schema checks verify
 structure; they do not prove native template expansion, IAM or deployment.
 
@@ -125,12 +129,12 @@ which ones already exist:
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Pipeline         | `devtrack-release`, ID `devtrack_release`; apply the versioned YAML                                                            |
 | GitHub connector | Existing `github`, repository `krish-121/devtrack`                                                                             |
-| GCP connector    | `gcp`, short-lived OIDC/Workload Identity Federation preferred                                                                 |
+| GCP connectors   | `gcp` uses short-lived OIDC for CI; approved `gcp_cd` credential fallback handles native CD                                    |
 | Service          | `devtrack`, Google Cloud Run deployment type                                                                                   |
 | Manifest source  | GitHub connector `github`, this repository, `infrastructure/cloud-run/devtrack.yaml`, fetched by the release's full commit SHA |
 | Artifact source  | GAR/Docker, approved project/region/repository, package `devtrack`; explicit version equal to `inputs.release_commit`          |
 | Environment      | `production`                                                                                                                   |
-| Infrastructure   | `cloud_run`, approved GCP project/region and `gcp` connector; concurrent deployments disabled/queued                           |
+| Infrastructure   | `cloud_run`, approved GCP project/region and `gcp_cd` connector; concurrent deployments disabled/queued                        |
 | Google secret    | `production_database_url`, numeric secret version matching `database_secret_version`                                           |
 | Runtime identity | Dedicated Cloud Run service account; access only to the required database secret                                               |
 
@@ -163,18 +167,19 @@ editor accepted `build_args` with `path1`/`path2` pairs, but real execution
 silently omitted the Docker build argument: the published image's label named
 the correct commit while its baked `APP_VERSION` remained `development`.
 
-The prepared fix pins the observed stable template version and forwards the
+The verified fix pins the observed stable template version and forwards the
 public `APP_VERSION` through Package's environment with
 `PLUGIN_BUILD_ARGS_FROM_ENV=APP_VERSION`, supported by the
 [official BuildX argument parser](https://github.com/drone-plugins/drone-buildx/blob/master/app.go).
 Both Docker targets reject an absent or malformed SHA, so failed forwarding
-stops the build before publication. This path still requires a real Harness
-execution; local Docker success alone does not prove the template wiring.
+stops the build before publication. Real Harness publishing and digest-based
+pulls proved both baked versions match the exact release SHA.
 The pipeline publishes the
 `runtime` target as `devtrack:<SHA>` and the separate `migrations` target as
 `devtrack-migrations:<SHA>`. Both bake the same `APP_VERSION`. A real execution
-must still prove corrected version metadata and artifact resolution; schema validity
-alone does not prove it. The local Docker suite verifies both targets.
+must prove corrected version metadata and artifact resolution; schema validity
+alone does not prove it. Those checks now pass, and the local Docker suite
+also verifies both targets.
 
 The next real release (`30f5d3783ffd60c180e990f63dc205b9fd538928`)
 published both targets with the correct baked version, verified after pulling
@@ -205,7 +210,9 @@ grant it. No load balancer or custom domain is needed for this V1 setup.
 Create a dedicated release identity. Bind Harness's account-specific OIDC issuer
 to a Workload Identity Provider, restrict its accepted account claims, and grant
 only the required service-account impersonation. Do not create a long-lived JSON
-key or grant Owner to simplify setup. The bootstrap administrator's ability to
+key or grant Owner merely to simplify setup. The separately approved limited CD
+compatibility fallback is documented in the identity plan; no further key or
+broader access is authorized. The bootstrap administrator's ability to
 create IAM resources is separate from the pipeline's runtime permissions.
 
 Scope GAR writer access to the selected repository. Grant Cloud Run deployment
@@ -301,8 +308,10 @@ trigger. Its committed default is deliberately disabled under the no-cost limit.
 - Migration success, Cloud Run revision/image digest and deployment time.
 - Public HTTPS health/version/frontend smoke success.
 
-There is currently no live deployment URL, GAR digest or cloud success record.
-Do not describe these phases as complete until that evidence exists.
+Published GAR digests and native artifact-resolution success are recorded in
+the phase report. Final Cloud Run revision, production migration, public URL
+and HTTPS smoke evidence remain required. Do not call Phase 14 complete until
+those checks pass.
 
 References: [Harness GAR build](https://developer.harness.io/harness-platform/3.0/in-harness-3.0/pipelines/steps/ci),
 [OIDC with GCP](https://developer.harness.io/continuous-integration/use-harness-ci/secure-harness-ci/configure-oidc-gcp-wif-ci-hosted),

@@ -58,12 +58,16 @@ perform only the already approved release identity's operations in this trial
 project; do not add roles, billing access, database permissions or other projects.
 Store the credential in Harness's managed secret storage and a restricted, ignored local
 recovery folder. Never commit it, print it, place it in a Run step, or include it
-in screenshots. The owner must complete credential upload in the connector UI.
+in screenshots. The approved existing credential has been uploaded to Harness's
+project-scoped file secret `devtrack_cd_credentials`; no second key was created.
 
 A key is a reusable credential rather than a short-lived token. Revoke it when
 the trial/demo is retired or when a verified native OIDC fix replaces it. Keep
 the app running during the trial as requested. Creating this compatibility
 connector does not upgrade billing or create a paid resource. One key was
 created on 25 October 2026 in the restricted local recovery folder; its contents
-were not printed. Owner upload, connector testing and live CD execution remain
-pending. Approval and key creation do not prove that deployment has passed.
+were not printed. Connector `gcp_cd` passed its real connection test. The service's
+GAR artifact and the production infrastructure both use it. Real CD artifact
+resolution then succeeded after the documented Docker-format correction. These
+checks establish authentication/artifact resolution, not successful deployment;
+the final release evidence is recorded separately in [PHASE_13_14.md](PHASE_13_14.md).
