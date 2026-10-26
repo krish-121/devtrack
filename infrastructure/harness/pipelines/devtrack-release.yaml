@@ -234,7 +234,6 @@ pipeline:
               manifest: .ci/migration-job.yaml
               execute_cmd_options: --wait
               project: ${{ inputs.gcp_project }}
-              job: devtrack-migrate
         - name: Deploy the published artifact
           id: Deploy
           template:

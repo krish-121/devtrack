@@ -7,8 +7,10 @@ been no paid billing upgrade.
 
 The owner signed back in and release #7 proved the generated-workspace fix.
 Its migration action then failed before job creation because the native template
-did not supply its Google project. Explicit native project/job inputs are being
-validated. Do not substitute a manual deployment and describe it as Harness CD.
+did not supply its Google project. Release #8 proved the explicit project binding,
+then exposed job-name precedence over the manifest. Manifest-only mode has now
+passed an offline vendor-plugin probe and awaits real execution. Do not substitute
+a manual deployment and describe it as Harness CD.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for configuration and trial operation,
 [HARNESS.md](HARNESS.md) for every stage/resource, and
@@ -68,6 +70,16 @@ The native job action received its connector/region but omitted `PLUGIN_PROJECT`
 then stopped with “google cloud run project is not configured in env variables”.
 The supported template keys `project` and `job` were confirmed in the account
 editor. Explicit bindings preserve the same approved project/identity and job.
+
+[Release #8](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/orgs/default/projects/DevTrack/pipelines/devtrack_release/executions/SIm9XmVgT26vYjzhNvIPvw/pipeline)
+used `fdea5e077d9e15cc7c80d60db45e13dc2457ea06`. The native project binding resolved
+correctly. Supplying `job: devtrack-migrate` selected execute-existing mode, which
+ignored the manifest and returned NOT_FOUND before creating any job. An offline
+probe of the exact vendor plugin with a fake SDK/no network/no credentials proved
+that omitting `job` makes it read the manifest name, replace/create, then execute
+with `--wait`. The correction removes that one input and keeps both explicit
+project bindings. Cloud Resource Manager's control API was enabled to remove the
+SDK's project-validation warning; it grants no IAM role and creates no compute.
 
 No failing run migrated production or created a Cloud Run app/job. Preserve audit
 records rather than deleting failed executions or rewriting image tags.
