@@ -1,16 +1,16 @@
 # Phase 13/14 release evidence
 
-Updated 26 October 2026. **Phase 13 artifact publishing is verified. Phase 14
-live deployment is still pending.** No Cloud Run service or migration job existed
-at the current Google CLI check. The small database remains RUNNABLE. There has
-been no paid billing upgrade.
+Updated 26 October 2026. **Phase 13 and the first full Phase 14 Harness deployment
+are verified.** The production migration, native Cloud Run deployment and Harness
+external smoke step all passed. The small database and app remain available
+during the protected trial. There has been no paid billing upgrade.
 
 The owner signed back in and release #7 proved the generated-workspace fix.
 Its migration action then failed before job creation because the native template
 did not supply its Google project. Release #8 proved the explicit project binding,
 then exposed job-name precedence over the manifest. Manifest-only mode has now
-passed an offline vendor-plugin probe and awaits real execution. Do not substitute
-a manual deployment and describe it as Harness CD.
+passed an offline vendor-plugin probe and then the real release. No manual
+application deployment was substituted for Harness CD.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for configuration and trial operation,
 [HARNESS.md](HARNESS.md) for every stage/resource, and
@@ -18,7 +18,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for configuration and trial operation,
 
 ## What is verified
 
-- GitHub PRs #1 through #9 merged normally after required exact-head Harness
+- GitHub PRs #1 through #12 merged normally after required exact-head Harness
   validation. Main protection remains enabled. The owner explicitly authorized
   automatic agent review/merge on 25 October, replacing manual owner inspection.
 - Harness PR CI has real failing-then-passing proof in [PHASE_11_12.md](PHASE_11_12.md).
@@ -32,12 +32,16 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for configuration and trial operation,
   saved, passes its connection test and is bound to native CD. No IAM role was added.
 - Google project, immutable repository, scoped identities, running small managed
   PostgreSQL database and pinned managed database secret are configured.
-- The last deployment guard stopped on generated `cloud_run/` output. PR #9 now
-  ignores that exact root folder while retaining tracked-source/current-main checks.
+- PR #9 excludes only generated root `cloud_run/` output; PRs #11/#12 correct
+  native project wiring and manifest-mode migration. The real release passed
+  the unchanged tracked-source/current-main guards.
 - Local real-database, browser and Docker checks pass, including fresh and repeated
   Unix-socket migrations, image version guards and production container security.
 
 ## Traceable artifact proof
+
+This earlier artifact proof is retained as history. The first deployed artifact
+is recorded below under **First complete Harness release**.
 
 Repository: `us-central1-docker.pkg.dev/devtrack-trial-krish-20261024/devtrack`.
 Full commit: `a560ee3abc1f488791c18a895a7ff2823bc9a615`.
@@ -81,8 +85,37 @@ with `--wait`. The correction removes that one input and keeps both explicit
 project bindings. Cloud Resource Manager's control API was enabled to remove the
 SDK's project-validation warning; it grants no IAM role and creates no compute.
 
-No failing run migrated production or created a Cloud Run app/job. Preserve audit
+Runs 1–8 stopped before creating a migration job or app. Preserve their audit
 records rather than deleting failed executions or rewriting image tags.
+
+## First complete Harness release
+
+[Harness release #9](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/orgs/default/projects/DevTrack/pipelines/devtrack_release/executions/pVerDxXcR92S9PuO-k-CVQ/pipeline)
+succeeded for protected-main commit
+`c2f884020f41857ec22ca880654bba67cbd1c52b`, in 11m 37s. Validate, Package and
+Deploy Production all passed, including the native migration and external smoke.
+
+| Evidence                             | Verified value                                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Public app / exact configured origin | <https://devtrack-656038155261.us-central1.run.app>                                        |
+| First ready revision                 | `devtrack-00001-lmb`, created `2026-10-26T09:54:35.368632Z`                                |
+| Application image digest             | `sha256:c2d9d517135479093002e48b97b45e65dff0101cf1bd87c62c38868cc89a8d1a`                  |
+| Migration image digest               | `sha256:9b7f63ea00ff1e7b900fe9341281960e315da66645ee6c4429aa607fb2aa1ac3`                  |
+| Migration execution                  | `devtrack-migrate-jhqvz`, one success, completed `2026-10-26T09:54:08.632737Z`             |
+| Deployment                           | Native Harness deploy, 100% traffic to the ready revision; digest matches GAR              |
+| Image contents                       | Both images pulled by digest; baked `APP_VERSION` and revision label match the full commit |
+| External verification                | Harness and local HTTPS health, exact version and frontend smoke pass                      |
+| Access controls                      | Unauthenticated project API returns 401; HSTS and generated request-ID header present      |
+
+The observed native job image was `1.0.10`; native deploy was `1.0.11`. After
+deployment the native action waited for Google's first instance-count metrics;
+the app was already serving, and the action subsequently succeeded. This delay
+did not require extra IAM, a VM or enabling Compute Engine.
+
+Only the app service received public invocation. Application authentication,
+ownership checks, restricted database/secret access and the protected trial were
+preserved. These values record the first successful deployment, not a promise
+that the live version never changes.
 
 ## Corrections and reasons
 
@@ -146,20 +179,18 @@ The official Harness v1 pipeline and trigger schema checks passed. Real executio
 was still necessary: the native argument, authentication and image-format issues
 were not detectable from schema validation alone.
 
-## Remaining live verification
+## Automatic release and demonstration follow-up
 
-1. Run the corrected current protected-main commit with matching clone and
-   `release_commit`, explicit native project inputs, enablement true and preflight on.
-2. Verify the generated-workspace guard passes and the one-time migration job
-   completes before deploying the same published application artifact.
-3. Configure service-scoped public invocation for the interview app, leaving
-   application authentication and database access controls enabled.
-4. Verify the actual Cloud Run URL/revision/digest, external HTTPS health, exact
-   baked version, frontend and database-backed behavior. Record the results here.
-5. Enable the real main-push trigger only after manual success, then prove a main
-   update executes the same release path. Saved trigger YAML alone is insufficient.
-6. Prepare the demonstration account through normal application workflows; never
-   seed production. See [DEMO_GUIDE.md](DEMO_GUIDE.md).
+The real `devtrack_main_releases` trigger is enabled after manual success. Its
+saved configuration selects Push, `targetBranch Equals main`, auto-abort false,
+and the event SHA for clone/release inputs. The versioned YAML records the same
+approved project and inputs. The next protected documentation merge will provide
+the first automatic execution proof; trigger creation alone is not that proof.
+
+Production demo-account/sample-data creation awaits explicit owner approval after
+automatic approval review blocked that persistent state change. Public smoke and
+unauthenticated access checks are complete. Never seed production or publish a
+shared password. See [DEMO_GUIDE.md](DEMO_GUIDE.md).
 
 Keep the small database and app available during the protected trial as requested.
 Do not upgrade billing or shut the demo down after its first use. Hosting remains

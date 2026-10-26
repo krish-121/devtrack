@@ -1,9 +1,11 @@
 # Phase 15 documentation and final audit
 
 Updated 26 October 2026. The explanatory guides are implemented against the
-actual repository. Final deployment evidence still depends on the pending real
-Harness CD execution; see [PHASE_13_14.md](PHASE_13_14.md). No phase is certified
-complete solely because a document describes its intended behavior.
+actual repository. The first full Harness CD release passed; its commit, image
+digests, migration, revision and external checks are recorded in
+[PHASE_13_14.md](PHASE_13_14.md). The enabled main-push trigger's first automatic
+execution is the final automation follow-up. Documents alone do not certify a
+working deployment or independent understanding.
 
 ## Reading order
 
@@ -85,8 +87,17 @@ git diff --check
 
 The spec and AGENTS instructions remain unchanged by formatting. The earlier
 Windows sandbox Vitest temp-file issue was resolved by a successful unrestricted
-rerun. Test lint errors were fixed without suppressions. Remaining live CD
-verification is recorded separately rather than presented as a passed check.
+rerun. Test lint errors were fixed without suppressions. The real release repeated
+all CI checks, migrated the database, deployed the published image and passed its
+external smoke step. Both images were pulled by digest and their baked versions
+checked. Public HTTPS, HSTS, request IDs and unauthenticated 401 behavior were
+also verified. Native-template schema checks and an offline exact-vendor-plugin
+probe complement this real execution; neither replaces it.
+
+The final evidence update modifies README, deployment/design/progress/phase
+guides and the existing release trigger. It adds no application feature, schema,
+dependency or test. The significant fixes were native project inputs and
+manifest-only job mode; tests for application behavior remain unchanged.
 
 Suggested documentation commit: `docs: explain delivery evidence and project operation`.
 
