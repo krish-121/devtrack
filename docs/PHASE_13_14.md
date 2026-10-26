@@ -5,9 +5,10 @@ live deployment is still pending.** No Cloud Run service or migration job existe
 at the current Google CLI check. The small database remains RUNNABLE. There has
 been no paid billing upgrade.
 
-The next release needs the merged generated-workspace fix. Harness's browser
-session expired before it could be started; signing back in is required. Do not
-substitute a manual deployment and describe it as successful Harness CD.
+The owner signed back in and release #7 proved the generated-workspace fix.
+Its migration action then failed before job creation because the native template
+did not supply its Google project. Explicit native project/job inputs are being
+validated. Do not substitute a manual deployment and describe it as Harness CD.
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for configuration and trial operation,
 [HARNESS.md](HARNESS.md) for every stage/resource, and
@@ -59,6 +60,14 @@ from a registry manifest digest.
 | [4](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/orgs/default/projects/DevTrack/pipelines/devtrack_release/executions/dtXsgPOySb-sj8EJ7lrQhw/pipeline) | `30f5d3783ffd60c180e990f63dc205b9fd538928`: both baked versions correct; CD authenticates but artifact lookup returns 404 | Registry Accept-header probe proves Docker-only lookup rejects the OCI index.                                            |
 | [5](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/orgs/default/projects/DevTrack/pipelines/devtrack_release/executions/dRlGPpu1SK6mx7w3Z3zGbQ/pipeline) | `a560ee3abc1f488791c18a895a7ff2823bc9a615`: publish, artifact resolution and rendering pass; clean-workspace guard fails  | Docker format compatibility is proven; no migration ran.                                                                 |
 | [6](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/orgs/default/projects/DevTrack/pipelines/devtrack_release/executions/gnwK0wEcQwK13pDs7VW30Q/pipeline) | `ffec08ee46bb26ba4c99490fedb794b5d6bc4b71`: same stages pass; path-only diagnostic shows `?? cloud_run/`                  | Identifies native generated output precisely. PR #9 fixes the workspace boundary without removing the guard.             |
+
+[Release #7](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/orgs/default/projects/DevTrack/pipelines/devtrack_release/executions/aUvHhvaoSuC9qoUkkISFkw/pipeline)
+used `2aed5de5e0cc5246ff7126817b5305f0b28cae78`. Validation, publishing, artifact
+resolution, workspace guard, dependency setup and job-manifest preparation passed.
+The native job action received its connector/region but omitted `PLUGIN_PROJECT`,
+then stopped with “google cloud run project is not configured in env variables”.
+The supported template keys `project` and `job` were confirmed in the account
+editor. Explicit bindings preserve the same approved project/identity and job.
 
 No failing run migrated production or created a Cloud Run app/job. Preserve audit
 records rather than deleting failed executions or rewriting image tags.
@@ -127,8 +136,8 @@ were not detectable from schema validation alone.
 
 ## Remaining live verification
 
-1. Sign back into the existing Harness project and run the current protected-main
-   commit with matching clone and `release_commit`, enablement true and preflight on.
+1. Run the corrected current protected-main commit with matching clone and
+   `release_commit`, explicit native project inputs, enablement true and preflight on.
 2. Verify the generated-workspace guard passes and the one-time migration job
    completes before deploying the same published application artifact.
 3. Configure service-scoped public invocation for the interview app, leaving

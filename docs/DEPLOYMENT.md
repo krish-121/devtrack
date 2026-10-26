@@ -269,6 +269,14 @@ rendering the service manifest, before user-defined Run steps execute. Release
 input. This does not ignore `infrastructure/cloud-run/`, relax tracked-source
 checks or change the selected release commit. Do not put maintained source there.
 
+The next native execution passed that guard, then exposed a separate template
+default: the migration action received its connector and region but no Google
+project (`PLUGIN_PROJECT` was absent). Both native job/deploy templates now bind
+their supported `project` input explicitly to `inputs.gcp_project`; the job also
+names `devtrack-migrate` explicitly. These keys were confirmed using the account's
+template editor and the vendor plugin's configuration tags. This changes input
+wiring, not IAM, credentials or the migration/deploy order.
+
 `migrate-production.ts` requires an explicitly supplied production environment,
 HTTPS origin, database URL and full SHA before invoking `prisma migrate deploy`.
 Prisma configuration skips local `.env` loading in production. The application
