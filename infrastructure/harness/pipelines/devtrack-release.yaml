@@ -233,10 +233,14 @@ pipeline:
             with:
               manifest: .ci/migration-job.yaml
               execute_cmd_options: --wait
+              project: ${{ inputs.gcp_project }}
+              job: devtrack-migrate
         - name: Deploy the published artifact
           id: Deploy
           template:
             uses: googleCloudRunDeployStep
+            with:
+              project: ${{ inputs.gcp_project }}
         - name: Verify deployed health and commit
           id: Smoke
           run:
