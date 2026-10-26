@@ -8,9 +8,11 @@ filters; project progress is derived from stored tasks.
 
 Harness validates GitHub PRs, and its release pipeline builds immutable Docker
 images in Google Artifact Registry for migration and deployment to Cloud Run.
-Artifact publication and exact baked versions have been verified. Final live
-deployment verification is in progress; see the
-[current release evidence](docs/PHASE_13_14.md) for the exact verified state.
+The first complete Harness release passed migration, deployment and external
+health/version/frontend checks. Open the [live DevTrack app](https://devtrack-656038155261.us-central1.run.app).
+Hosting uses the owner's protected Google Free Trial and is limited by its
+remaining credit/duration. See the [release evidence](docs/PHASE_13_14.md) for
+commit, image digest, revision and execution links.
 
 See the [Phase 13/14 status](docs/PHASE_13_14.md),
 [deployment setup and trial lifecycle](docs/DEPLOYMENT.md),

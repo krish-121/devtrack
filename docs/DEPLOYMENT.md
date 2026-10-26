@@ -2,11 +2,11 @@
 
 This is the setup, operation and trial-lifecycle guide. The user authorized the
 small database and deployment using protected Google Free Trial credit, with no
-paid upgrade or cash charges. Artifact publishing, baked versions, native CD
-authentication and artifact/manifest resolution are verified. The final live
-release is pending; [PHASE_13_14.md](PHASE_13_14.md) records exact executions and
-current evidence. The main-push trigger remains disabled until manual release
-and external checks pass. `release_enabled` defaults to false for manual runs.
+paid upgrade or cash charges. The first complete Harness release passed production
+migration, native deployment and external HTTPS checks. The main-push trigger is
+now enabled after that manual proof; its first automatic execution will verify
+the webhook. [PHASE_13_14.md](PHASE_13_14.md) records exact evidence.
+`release_enabled` still defaults to false for manual runs.
 
 ## Verified setup (updated 26 October 2026)
 
@@ -16,7 +16,7 @@ and external checks pass. `release_enabled` defaults to false for manual runs.
 - Registry: `us-central1/devtrack`, Docker format, immutable tags. The first app
   and migration images were published from reviewed main; their version check
   failed. Do not deploy or overwrite those immutable tags. See
-  [the release evidence](PHASE_13_14.md#live-release-evidence).
+  [the release evidence](PHASE_13_14.md#first-complete-harness-release).
 - Identity: [approved roles and trust boundary](DEPLOYMENT_IDENTITY_PLAN.md).
   CI remains keyless. The owner separately approved one limited CD credential
   after the native artifact plugin failed to exchange its OIDC token. Connector
@@ -49,9 +49,15 @@ and external checks pass. `release_enabled` defaults to false for manual runs.
 - Secret `production_database_url`, version `1`, is enabled in Google Secret
   Manager with only the approved runtime identity granted secret access. Neither
   its value nor the database password is stored in Git or a Harness Run step.
-- GAR images are published and verified; see the report for digests. No production
-  migration, Cloud Run service/job or public demo existed at the last check.
-  Local Unix-socket migration/app verification passes.
+- The production migration job succeeded before the first Cloud Run revision
+  became ready. The public origin is
+  `https://devtrack-656038155261.us-central1.run.app`; the provider also returns
+  `https://devtrack-sysiyhu6ua-uc.a.run.app`. Use the first origin consistently:
+  it exactly matches `APP_ORIGIN` and cookie/origin protection.
+- Only service `devtrack` grants `allUsers` the `roles/run.invoker` role so an
+  interviewer can reach the website. App login and owner-scoped data remain
+  required; the database has no public IP allowlist. No project-wide public role
+  or other IAM permission was added.
 
 The user wants the demo available for internship interviews. Do not shut it down
 after the first demonstration without their agreement. Trial expiry is still a
@@ -306,13 +312,15 @@ traffic back to a known-good existing Cloud Run revision only when compatible
 with the current schema. Never rebuild an old tag or assume a destructive
 migration can be reversed automatically.
 
-Before enabling `devtrack_main_releases`, merge the reviewed application and
-pipeline PRs, configure every required input/resource, inspect template expansion,
-run a manually selected main commit and collect successful evidence. Then set
-`release_enabled=true` in the reviewed trigger/input configuration and enable the
-trigger. Its committed default is deliberately disabled under the no-cost limit.
+`devtrack_main_releases` was enabled only after the first complete manual release
+and external checks passed. It selects GitHub Push events for `main`, passes the
+event's full commit into both clone and release input, and uses the approved
+trial configuration. Auto-abort is false; migrations are not interrupted by a
+new push. Keep merges sequential while demonstrating releases because source
+guards reject stale current-main checkouts. Disable this trigger when retiring
+the trial; do not upgrade billing to keep it running.
 
-## Evidence needed to complete Phases 13/14
+## Evidence for Phases 13/14
 
 - Main commit and successful Harness execution URL.
 - GAR full-SHA image tag and registry manifest digest.
@@ -321,10 +329,10 @@ trigger. Its committed default is deliberately disabled under the no-cost limit.
 - Migration success, Cloud Run revision/image digest and deployment time.
 - Public HTTPS health/version/frontend smoke success.
 
-Published GAR digests and native artifact-resolution success are recorded in
-the phase report. Final Cloud Run revision, production migration, public URL
-and HTTPS smoke evidence remain required. Do not call Phase 14 complete until
-those checks pass.
+The phase report records the first real successful migration, revision, digest,
+public URL and HTTPS smoke evidence. Preserve this historical proof rather than
+rewriting every document with each later release's SHA. The live `/api/v1/version`
+reports whichever commit is currently deployed.
 
 References: [Harness GAR build](https://developer.harness.io/harness-platform/3.0/in-harness-3.0/pipelines/steps/ci),
 [OIDC with GCP](https://developer.harness.io/continuous-integration/use-harness-ci/secure-harness-ci/configure-oidc-gcp-wif-ci-hosted),

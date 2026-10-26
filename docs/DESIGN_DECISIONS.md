@@ -108,6 +108,25 @@ Maintained manifests remain under `infrastructure/cloud-run/` and stay tracked.
 and tracked-file integrity checks remain mandatory; generated output does not
 become application source.
 
+### Native Cloud Run inputs
+
+**Problem:** The native job template did not inherit its Google project. Adding
+an explicit job name then selected execute-existing mode and ignored the manifest,
+so a first deployment could not create the migration job.
+
+**Alternatives:** Create the job manually, broaden permissions, or correct the
+supported native template inputs.
+
+**Decision:** Bind `project` explicitly on both native actions. Pass `manifest`
+without `job` to the migration action, with `execute_cmd_options: --wait`. An
+offline probe of the exact vendor plugin verified replace-before-execute behavior;
+the real release then created the job and completed the production migration.
+
+**Tradeoff:** Template schema validation cannot prove these runtime defaults.
+Preserve the actual execution evidence and recheck behavior after plugin updates.
+Cloud Resource Manager's control API supports SDK project validation; no Compute
+API, extra IAM role, VM or manual deployment was needed.
+
 ## Development process change
 
 On 25 October 2026 the owner explicitly replaced the spec's manual owner-inspection

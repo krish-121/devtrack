@@ -1,7 +1,7 @@
 trigger:
   name: DevTrack reviewed main releases
   identifier: devtrack_main_releases
-  enabled: false
+  enabled: true
   orgIdentifier: default
   projectIdentifier: DevTrack
   pipelineIdentifier: devtrack_release
@@ -22,7 +22,14 @@ trigger:
   inputYaml: |
     inputs:
       release_commit: <+trigger.commitSha>
-      release_enabled: false
+      release_enabled: true
+      gcp_project: devtrack-trial-krish-20261024
+      region: us-central1
+      artifact_repository: devtrack
+      application_origin: https://devtrack-656038155261.us-central1.run.app
+      runtime_service_account: devtrack-runtime@devtrack-trial-krish-20261024.iam.gserviceaccount.com
+      cloud_sql_connection: devtrack-trial-krish-20261024:us-central1:devtrack-postgres-small
+      database_secret_version: "1"
       overlay:
         clone:
           connector: github
