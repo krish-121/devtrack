@@ -18,7 +18,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for configuration and trial operation,
 
 ## What is verified
 
-- GitHub PRs #1 through #12 merged normally after required exact-head Harness
+- GitHub PRs #1 through #13 merged normally after required exact-head Harness
   validation. Main protection remains enabled. The owner explicitly authorized
   automatic agent review/merge on 25 October, replacing manual owner inspection.
 - Harness PR CI has real failing-then-passing proof in [PHASE_11_12.md](PHASE_11_12.md).
@@ -142,11 +142,10 @@ sections 44/45: generated `X-Request-ID`, async Pino context and completion logs
 with method/path/status/duration. Query strings, credentials and request payloads
 are omitted. No business behavior, API JSON shape or schema changed.
 
-**126 unique tests:** 49 API unit + 47 real database/API integration + 28 frontend
-
-- two Chromium workflows. Coverage and Docker rerun existing tests; they are not
-  added again. API coverage: lines 98.64%, branches 91.94%, functions 100%; frontend:
-  lines 94.01%, branches 88.65%, functions 92.46%. Required thresholds pass.
+**126 unique tests:** 49 API unit, 47 real database/API integration, 28 frontend
+and 2 Chromium workflows. Coverage and Docker rerun existing tests; they are not
+added again. API coverage: lines 98.64%, branches 91.94%, functions 100%; frontend:
+lines 94.01%, branches 88.65%, functions 92.46%. Required thresholds pass.
 
 Executed successfully on the final application change:
 
@@ -175,17 +174,49 @@ ENOENT errors; an unrestricted rerun passed. A new test's unsafe matcher type wa
 fixed without suppressions; lint and strict types then passed. These failures
 were resolved, not counted as successful tests.
 
+Operational verification used `gcloud artifacts docker images list --include-tags`,
+digest-pinned `docker pull` and `docker image inspect`, `gcloud run jobs executions
+describe`, `gcloud run revisions describe`, and `gcloud logging read` with only
+safe request fields selected. Public smoke used `npm run smoke:deployment --
+HTTPS_ORIGIN FULL_SHA`. No production seed or manual application deployment ran.
+
 The official Harness v1 pipeline and trigger schema checks passed. Real execution
 was still necessary: the native argument, authentication and image-format issues
 were not detectable from schema validation alone.
 
-## Automatic release and demonstration follow-up
+## First automatic main-push release
 
 The real `devtrack_main_releases` trigger is enabled after manual success. Its
 saved configuration selects Push, `targetBranch Equals main`, auto-abort false,
 and the event SHA for clone/release inputs. The versioned YAML records the same
-approved project and inputs. The next protected documentation merge will provide
-the first automatic execution proof; trigger creation alone is not that proof.
+approved project and inputs.
+
+Merging [PR #13](https://github.com/krish-121/devtrack/pull/13), after its required
+exact-head [Harness validation](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/ci/orgs/default/projects/DevTrack/pipelines/devtrack_pr_validation/executions/YOGq1znkQY2TiALNhIx18w/pipeline?stage=wbMplqeTRGqNgA9QjpKYBA),
+automatically started [release #10](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/orgs/default/projects/DevTrack/pipelines/devtrack_release/executions/Rkgl7sDOSPuNZwrqWYwPAA/pipeline).
+Harness identifies its trigger as **Webhook**, with the merged commit
+`621e9099e8df9c137124c180c8452b63bfbe6334`. All stages succeeded in 9m 41s.
+
+| Evidence                 | Verified value                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Application image digest | `sha256:d5bb6ed7fe51c450c5791b0494f117af2cab069b7e6f50c98c6f21a9c18b2c82`                                      |
+| Migration image digest   | `sha256:fe6ce390805f62672c67a6e49bf4dca4d1a65946adbdfd2f87cc9b84913d7016`                                      |
+| Repeated migration       | `devtrack-migrate-pn8r9`, succeeded `2026-10-26T10:12:46.298256Z`                                              |
+| Ready revision           | `devtrack-00002-jbd`, created `2026-10-26T10:13:16.418273Z`                                                    |
+| Running version          | Deployed digest matches GAR; public `/api/v1/version` equals the full merged commit                            |
+| Verification             | Full release CI gate, native migration/deploy and Harness external smoke pass; independent public smoke passes |
+
+This proves the merge-to-production webhook path and a safe repeat of the
+migration path on the initialized database. Production structured logs were also
+read with only method/path/status/duration/request-ID fields; normal version
+requests returned 200 and unauthenticated project requests returned 401.
+
+These are historical first-release proofs. Later documentation merges also
+trigger new releases; check the current execution and `/api/v1/version` for the
+currently running SHA. Do not rebuild or rewrite an old immutable tag merely to
+make a document's first-release SHA become current again.
+
+## Demonstration account
 
 Production demo-account/sample-data creation awaits explicit owner approval after
 automatic approval review blocked that persistent state change. Public smoke and
