@@ -9,6 +9,7 @@ playwright-report
 test-results
 .ci
 cloud_run
+dockerconfig
 .env*
 .npmrc
 *.log

@@ -275,7 +275,16 @@ rendering the service manifest, before user-defined Run steps execute. Release
 input. This does not ignore `infrastructure/cloud-run/`, relax tracked-source
 checks or change the selected release commit. Do not put maintained source there.
 
-The next native execution passed that guard, then exposed a separate template
+Release #12's path-only diagnostic also found root `?? dockerconfig` after native
+service/artifact initialization. It stopped before migration/deployment, leaving
+the previous successful app untouched. The exact root file is excluded from Git
+and Docker context because it is generated registry authentication configuration,
+not maintained source. Never read, print or commit its contents. Nested source
+paths are not covered by this Git exclusion; the source guard remains unchanged.
+Docker removes excluded files before sending the
+[build context](https://docs.docker.com/build/concepts/context/#dockerignore-files).
+
+Release #7 passed the generated-folder guard, then exposed a separate template
 default: the migration action received its connector and region but no Google
 project (`PLUGIN_PROJECT` was absent). Both native job/deploy templates now bind
 their supported `project` input explicitly to `inputs.gcp_project`. The native job
