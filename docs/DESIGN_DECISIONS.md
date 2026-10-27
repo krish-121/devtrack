@@ -97,15 +97,22 @@ the account's reader supports the resulting OCI format. See
 **Problem:** Native CD fetched/rendered manifests into root `cloud_run/` before
 the source recheck, making an otherwise clean checkout appear dirty. The first
 guard stopped safely; a path-only diagnostic then identified the generated folder.
+Release #12 later identified a second generated root path, `?? dockerconfig`,
+after native service/artifact initialization and before any migration. The clean
+Validate/Package checkouts contained no such tracked application file. Treat this
+temporary registry configuration as sensitive; its contents were never inspected.
 
 **Alternatives:** Remove the clean-source guard, delete generated deployment
-files, or exclude the exact generated directory from source/build input.
+files, or exclude the exact generated paths from source/build input.
 
 **Decision:** Ignore root `/cloud_run/` in Git and `cloud_run` in Docker context.
+Also exclude the exact root `/dockerconfig` in Git and `dockerconfig` from Docker
+context. It must never become source or an image input. No general Docker-file
+wildcard, source-guard change or permission expansion is required.
 Maintained manifests remain under `infrastructure/cloud-run/` and stay tracked.
 
-**Tradeoff:** Nothing maintained may be stored in that root folder. Current-main
-and tracked-file integrity checks remain mandatory; generated output does not
+**Tradeoff:** Nothing maintained may be stored in those reserved root paths.
+Current-main and tracked-file integrity checks remain mandatory; generated output does not
 become application source.
 
 ### Native Cloud Run inputs

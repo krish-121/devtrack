@@ -111,7 +111,7 @@ registration, login/logout, persistence, task updates/filtering and dashboard
 counts passed. DEMO_GUIDE explains private access without publishing credentials.
 Release #11's full success and deployed image identity were also verified.
 
-This final update modifies DEMO_GUIDE, PHASE_13_14, PROJECT_PROGRESS and this
+The demo update modifies DEMO_GUIDE, PHASE_13_14, PROJECT_PROGRESS and this
 report. No maintained file, application feature, dependency, schema or automated
 test was added. An ignored local verification helper was adjusted to use only
 the approved account, and its nonsecret result receipt records the hosted check.
@@ -122,9 +122,18 @@ diff review, followed by the full required Harness PR gate and automatic release
 The hosted helper used normal APIs; SDK checks inspected the revision, artifact
 digests, migration success and running database. Existing application tests and
 coverage thresholds remain unchanged. The earlier account-creation review block
-is resolved by explicit owner approval. Only the owner's learning pass remains.
+is resolved by explicit owner approval. The owner's learning pass remains separate
+from implementation verification.
 
-Suggested documentation commit: `docs: verify private interview demo and final release`.
+The following release exposed another native-generated root file, `dockerconfig`,
+and stopped safely before migration/deployment. A focused fix reserves that exact
+path in `.gitignore` and `.dockerignore`, with explanations in DEPLOYMENT,
+DESIGN_DECISIONS, PHASE_13_14 and this report. The credential contents were never
+read or printed. Git boundary checks retain nested/maintained paths, and the
+unchanged source guard must pass in the corrected real release before handoff.
+No application feature, dependency, permission or billing setting changed.
+
+Suggested commit: `fix: exclude native registry config from release input`.
 
 ## Concepts to understand later
 
