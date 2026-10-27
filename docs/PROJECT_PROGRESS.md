@@ -1,7 +1,7 @@
 # DevTrack phase progress
 
 Engineering source of truth: [PROJECT_SPEC.md](PROJECT_SPEC.md), section 134.
-Status checked on 26 October 2026 against the working tree and prior project
+Status checked on 27 October 2026 against the working tree and prior project
 instructions. Phases 1–10 were implemented locally before being imported as
 focused bootstrap commits in the Phase 11 pull request.
 
@@ -26,9 +26,9 @@ focused bootstrap commits in the Phase 11 pull request.
 | 15 — Documentation         | Implemented and verified | Architecture, reasoning, real walkthroughs, study/demo guides, trial operation and manual/automatic deployment evidence     |
 | 16 — Learning Pass         | Deferred by owner        | Owner requested implementation first and learning later; independent exercises remain the owner's work                      |
 
-Phases 1–15 have working implementation and verification. Production sample-data
-preparation separately awaits the owner's explicit approval; the learning pass
-remains deferred. The owner explicitly authorized automatic
+Phases 1–15 have working implementation and verification. The approved private
+production demo account, project and seven sample tasks are prepared, and hosted
+workflows pass. The learning pass remains deferred. The owner explicitly authorized automatic
 review/merge of project PRs after required checks pass on 25 October 2026,
 overriding the original owner-inspection procedure while preserving branch
 protection. See [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md) for that instruction and

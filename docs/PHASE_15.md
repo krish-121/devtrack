@@ -1,6 +1,6 @@
 # Phase 15 documentation and final audit
 
-Updated 26 October 2026. The explanatory guides are implemented against the
+Updated 27 October 2026. The explanatory guides are implemented against the
 actual repository. The first full Harness CD release passed; its commit, image
 digests, migration, revision and external checks are recorded in
 [PHASE_13_14.md](PHASE_13_14.md). The enabled main-push trigger also completed a
@@ -105,12 +105,26 @@ guides and the existing release trigger. It adds no application feature, schema,
 dependency or test. The significant fixes were native project inputs and
 manifest-only job mode; tests for application behavior remain unchanged.
 
-The production demonstration account has not been created: automatic approval
-review requires explicit approval for that persistent account/sample-data change.
-Its normal-UI preparation instructions are available in DEMO_GUIDE. This is
-separate from the verified deployment and from the owner's deferred learning.
+The owner explicitly approved the production demonstration account and sample
+data. The private account, one project and seven tasks are prepared; hosted
+registration, login/logout, persistence, task updates/filtering and dashboard
+counts passed. DEMO_GUIDE explains private access without publishing credentials.
+Release #11's full success and deployed image identity were also verified.
 
-Suggested documentation commit: `docs: explain delivery evidence and project operation`.
+This final update modifies DEMO_GUIDE, PHASE_13_14, PROJECT_PROGRESS and this
+report. No maintained file, application feature, dependency, schema or automated
+test was added. An ignored local verification helper was adjusted to use only
+the approved account, and its nonsecret result receipt records the hosted check.
+The private credential file is also ignored and access-restricted.
+
+Validation includes formatting, ESLint, strict TypeScript, Markdown links and
+diff review, followed by the full required Harness PR gate and automatic release.
+The hosted helper used normal APIs; SDK checks inspected the revision, artifact
+digests, migration success and running database. Existing application tests and
+coverage thresholds remain unchanged. The earlier account-creation review block
+is resolved by explicit owner approval. Only the owner's learning pass remains.
+
+Suggested documentation commit: `docs: verify private interview demo and final release`.
 
 ## Concepts to understand later
 

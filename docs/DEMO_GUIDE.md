@@ -4,7 +4,27 @@ Use this with [WALKTHROUGH.md](WALKTHROUGH.md), the current live evidence in
 [PHASE_13_14.md](PHASE_13_14.md), and [DEPLOYMENT.md](DEPLOYMENT.md). Verify the app
 before an interview; protected trial hosting has an end date and cold starts.
 
-## Prepare once
+## Prepared private account
+
+The owner-approved interview account was prepared on 27 October 2026 through
+normal hosted registration/project/task APIs. Its login is stored only in the
+ignored local file `D:\devtrack\.ci\deployment-secrets\demo-account\credentials.json`.
+Open that file privately on the owner's computer and use its email/password at
+the [live login page](https://devtrack-656038155261.us-central1.run.app/login).
+Do not commit, screenshot, publish or send its password to an interviewer.
+
+**Harness Portfolio Project** contains seven sample tasks: six DONE and one TODO.
+The open task is the owner's later request-lifecycle practice. Hosted verification
+covered registration/session identity, task creation and updates, status/priority/
+search filtering, dashboard counts, logout revocation and persistence after login.
+The verification task remains as sample data; no other account's data was changed.
+There is no public shared login or production seed.
+
+The private file is restricted to the current Windows user and SYSTEM. If moving
+computers, transfer it through a private channel or create your own account;
+the repository deliberately cannot recover a password or private demo login.
+
+## Preparing another account yourself
 
 Create your own account through normal registration. Keep its password private;
 the development seed intentionally provides no usable login and must never run
