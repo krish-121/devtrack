@@ -322,7 +322,8 @@ The setup follows the official [Vite configuration documentation](https://vite.d
 [typescript-eslint typed linting guidance](https://typescript-eslint.io/getting-started/typed-linting/),
 and [Express error-handling guidance](https://expressjs.com/en/guide/error-handling/).
 
-GitHub workflow and Harness PR validation are verified. Cloud release definitions
-are prepared but publishing/deployment are not yet verified. Project
+GitHub PR validation, artifact publication and Cloud Run deployment are verified
+through Harness. See the [release evidence](docs/PHASE_13_14.md) for recorded
+executions and artifact identities. Project
 deletion uses the existing database cascade and permanently removes its tasks;
 the UI requires explicit confirmation. Archiving is not implemented.
