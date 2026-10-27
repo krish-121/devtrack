@@ -1,6 +1,6 @@
 # Phase 13/14 release evidence
 
-Updated 26 October 2026. **Phase 13 and the first full Phase 14 Harness deployment
+Updated 27 October 2026. **Phase 13 and the first full Phase 14 Harness deployment
 are verified.** The production migration, native Cloud Run deployment and Harness
 external smoke step all passed. The small database and app remain available
 during the protected trial. There has been no paid billing upgrade.
@@ -218,10 +218,41 @@ make a document's first-release SHA become current again.
 
 ## Demonstration account
 
-Production demo-account/sample-data creation awaits explicit owner approval after
-automatic approval review blocked that persistent state change. Public smoke and
-unauthenticated access checks are complete. Never seed production or publish a
-shared password. See [DEMO_GUIDE.md](DEMO_GUIDE.md).
+The owner explicitly approved the private production account and sample data.
+It was created on 27 October 2026 through the normal app API, with one **Harness
+Portfolio Project** and seven sample tasks. Hosted verification passed against
+commit `afffb73d819c22071a3c2b68a22deeaa7ca4a596`:
+
+- registration and authenticated session identity;
+- project/task creation and saved project retrieval after a new login;
+- task transitions through IN_PROGRESS to DONE;
+- combined status, priority and search filtering;
+- dashboard counts of six completed tasks and one open task;
+- logout revocation, confirmed by a protected endpoint returning 401.
+
+The generated password stays only in the approved ignored local credential file,
+restricted to the current Windows user and SYSTEM. No password/cookie was printed
+or committed, no production seed ran, and no existing account's data changed.
+The earlier automatic-review block was resolved by this explicit approval.
+See [DEMO_GUIDE.md](DEMO_GUIDE.md) for private access and the interview route.
+
+## Follow-up release verification
+
+[Webhook release #11](https://app.harness.io/ng/account/mtlwn9WUSnWeBUymA4te_Q/all/orgs/default/projects/DevTrack/pipelines/devtrack_release/executions/DcxYmreyRX6QieYtJ_zcxw/pipeline)
+also succeeded after PR #14 merged, in 8m 9s. Its released commit is
+`afffb73d819c22071a3c2b68a22deeaa7ca4a596`; all stages and the final external smoke
+passed. Cloud Run revision `devtrack-00003-f7g` was created at
+`2026-10-26T10:28:10.351151Z`. Its app digest matches the registry:
+`sha256:39bc59e2d26438e0d4bb499478fcfb3971b3a39aa74ad8dcc6c5ac3278ba57b2`.
+The migration image digest is
+`sha256:446d46b4fdb5f778a95fa86cf30b5573e8fb7e120ad4c95875a731e5c9552d1a`;
+execution `devtrack-migrate-4c7x7` succeeded at `2026-10-26T10:27:41.584778Z`.
+The public version and hosted workflow checks independently matched that commit.
+
+This completes the previously pending release inspection and production workflow
+verification. A final documentation merge will create another automatic release;
+its current result is checked at handoff rather than starting an endless cycle of
+commits that merely update a document's "latest" SHA.
 
 Keep the small database and app available during the protected trial as requested.
 Do not upgrade billing or shut the demo down after its first use. Hosting remains
